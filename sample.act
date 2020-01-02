@@ -1,0 +1,38 @@
+actor A(5){
+	knownactors {
+		B b;
+	}
+
+	actorvars {
+		int i;
+	}
+
+	msghandler initial() {
+		i = 2;
+		b.foo(i);
+	}
+
+	msghandler bar(int i){
+		print(i);
+		sender.foo(i+1);
+	}
+}
+
+actor B(2){
+	knownactors {
+		A a;
+	}
+
+	actorvars {
+	}
+
+	msghandler foo(int i) {
+		print(i);
+		sender.bar(i+1);
+	}
+}
+
+main {
+	A a(b):();
+	B b(a):();
+}
