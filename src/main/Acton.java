@@ -4,9 +4,9 @@ import antlr.actonLexer;
 import antlr.actonParser;
 import main.ast.node.Program;
 import main.compileError.CompileErrorException;
-//import main.visitor.astPrinter.ASTPrinter;
 import main.visitor.Errors;
 import main.visitor.Visitor;
+import main.visitor.byteCodeGenerator;
 import main.visitor.nameAnalyser.NameAnalyser;
 import main.visitor.typeCheckerImpl;
 import org.antlr.v4.runtime.*;
@@ -34,6 +34,8 @@ public class Acton {
                     System.out.println(entry.getKey());
                 });
             }
+            Visitor codeGenerator = new byteCodeGenerator();
+            codeGenerator.visit(program);
         }
         catch(CompileErrorException compileError){
         }

@@ -1,22 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="" />
+    <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/Acton.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/Acton.java" afterDir="false" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
   <component name="ProjectId" id="1Vpz0ybcKZFc0QSiCH3CiS9JXtQ" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
     <property name="$PROJECT_DIR$/src/antlr/acton.g4::/auto-gen" value="false" />
     <property name="$PROJECT_DIR$/src/antlr/acton.g4::/gen-listener" value="true" />
     <property name="$PROJECT_DIR$/src/antlr/acton.g4::/gen-visitor" value="false" />
     <property name="$PROJECT_DIR$/src/antlr/acton.g4::/output-dir" value="C:\Users\Taha\Desktop\compiler_p4\src\main\parsers" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/parsers" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.path.for.package.tslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.0" />
@@ -54,11 +78,22 @@
       <option name="presentableId" value="Default" />
       <updated>1577964605220</updated>
       <workItem from="1577964608523" duration="879000" />
-      <workItem from="1577965516851" duration="43000" />
+      <workItem from="1577965516851" duration="14121000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
