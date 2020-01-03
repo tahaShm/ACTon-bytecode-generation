@@ -9,14 +9,19 @@ import main.ast.node.expression.values.BooleanValue;
 import main.ast.node.expression.values.IntValue;
 import main.ast.node.expression.values.StringValue;
 import main.ast.node.statement.*;
+import main.symbolTable.SymbolTable;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class byteCodeGenerator implements Visitor {
     String actorFileName;
     String msgHandlerFileName;
+    ArrayList <VarDeclaration> currentMsgArgs;
+    ArrayList <VarDeclaration> currentActorVars;
+    ArrayList <VarDeclaration> currentKnownActors;
 
     public String bytecodeType(String type) {
         String ans = "";
@@ -52,6 +57,72 @@ public class byteCodeGenerator implements Visitor {
             program.getMain().accept(this);
     }
 
+    public int getLocalArgIdx(String id) {
+        int idx = 0;
+        for (VarDeclaration varDeclaration : currentMsgArgs) {
+            idx++;
+            if (varDeclaration.getIdentifier().getName().equals(id)) {
+                return idx;
+            }
+        }
+        return -1;
+    }
+
+    public String getIdType(String id) {
+        for (VarDeclaration varDeclaration : currentMsgArgs) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType().toString();
+        }
+        for (VarDeclaration varDeclaration : currentActorVars) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType().toString();
+        }
+        for (VarDeclaration varDeclaration : currentKnownActors) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType().toString();
+        }
+        return "error";
+    }
+
+    public String getIdTypeActorVars(String id) {
+        for (VarDeclaration varDeclaration : currentActorVars) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType().toString();
+        }
+        return "error";
+    }
+
+    public String getLoadCommand(String id) {
+        int index = getLocalArgIdx(id);
+        String command = "";
+        if (index == -1){
+            String idType = getIdTypeActorVars(id);
+            command = "aload_0\n" + "getfield " + actorFileName + "/" + id + " " + bytecodeType(idType);
+        }
+        else {
+            if (index > 3)
+                command = "iload " + index;
+            else
+                command = "iload_" + index;
+        }
+        return command;
+    }
+    public String getStoreCommand(String id) {
+        int index = getLocalArgIdx(id);
+        String command = "";
+        if (index == -1){
+            String idType = getIdTypeActorVars(id);
+            command = "aload_0\n" + "?????????????????" + "putfield " + actorFileName + "/" + id + " " + idType;
+        }
+        else {
+            if (index > 3)
+                command = "istore " + index;
+            else
+                command = "istore_" + index;
+        }
+        return command;
+    }
+
     @Override
     public void visit(ActorDeclaration actorDeclaration) {
 
@@ -70,24 +141,26 @@ public class byteCodeGenerator implements Visitor {
             myWriter.write(".super Actor\n\n");
 
             if (actorDeclaration.getKnownActors() != null) {
+                currentKnownActors = actorDeclaration.getKnownActors();
                 for (VarDeclaration varDeclaration : actorDeclaration.getKnownActors()) {
                     myWriter.write(".field " + varDeclaration.getIdentifier().getName() + " L" + varDeclaration.getType().toString() + ";\n");
                 }
             }
 
             if (actorDeclaration.getActorVars() != null) {
+                currentActorVars = actorDeclaration.getActorVars();
                 for (VarDeclaration varDeclaration : actorDeclaration.getActorVars()) {
-                    myWriter.write(".field " + varDeclaration.getIdentifier().getName() + " " +  bytecodeType(varDeclaration.getType().toString()));
+                    myWriter.write(".field " + varDeclaration.getIdentifier().getName() + " " +  bytecodeType(varDeclaration.getType().toString()) + "\n");
                 }
             }
-            myWriter.write("\n\n.method public <init>(I)V\n" +
+            myWriter.write("\n.method public <init>(I)V\n" +
                     ".limit stack 2\n" +
                     ".limit locals 2\n" +
                     "aload_0\n" +
                     "iload_1\n" +
                     "invokespecial Actor/<init>(I)V\n" +
                     "return\n" +
-                    ".end method\n\n"
+                    ".end method\n"
             );
 
             myWriter.flush();
@@ -103,13 +176,27 @@ public class byteCodeGenerator implements Visitor {
 
         try {
             FileWriter myWriter = new FileWriter(actorFileName + ".j" , true);
-            myWriter.write(".method public setKnownActors(");
+            myWriter.write("\n.method public setKnownActors(");
             if (actorDeclaration.getKnownActors() != null) {
                 for (VarDeclaration varDeclaration : actorDeclaration.getKnownActors()) {
                     myWriter.write(bytecodeType(varDeclaration.getType().toString()));
                 }
             }
             myWriter.write(")V\n");
+            myWriter.write(".limit stack 2\n");
+            myWriter.write(".limit locals " + (actorDeclaration.getKnownActors().size() + 1) + "\n");
+            if (actorDeclaration.getKnownActors() != null) {
+                int knownActorIdx = 0;
+                for (VarDeclaration varDeclaration : actorDeclaration.getKnownActors()) {
+                    knownActorIdx ++;
+                    myWriter.write("aload_0\n");
+                    myWriter.write("aload_" + knownActorIdx +  "\n");
+                    myWriter.write("putfield " + actorFileName + "/" + varDeclaration.getIdentifier().getName() + " " + bytecodeType(varDeclaration.getType().toString()) + "\n");
+                }
+            }
+            myWriter.write("return\n" +
+                ".end method\n"
+            );
 
             myWriter.flush();
             myWriter.close();
@@ -132,13 +219,21 @@ public class byteCodeGenerator implements Visitor {
         try {
             FileWriter myWriter = new FileWriter(actorFileName  + ".j" , true);
             if (handlerDeclaration instanceof InitHandlerDeclaration) {
-                myWriter.write(".method public " + handlerDeclaration.getName().getName() + "(");
+                myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(");
 
                 if (handlerDeclaration.getArgs() != null) {
+                    if (currentMsgArgs != null)
+                        currentMsgArgs.clear();
+                    currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
                     }
                     myWriter.write(")V\n");
+                }
+                if (handlerDeclaration.getLocalVars() != null) {
+                    for (VarDeclaration varDeclaration : handlerDeclaration.getLocalVars()) {
+                        currentMsgArgs.add(varDeclaration);
+                    }
                 }
 
                 myWriter.flush();
@@ -146,7 +241,7 @@ public class byteCodeGenerator implements Visitor {
             }
 
             else {
-                myWriter.write(".method public send_" + handlerDeclaration.getName().getName() + "(LActor;");
+                myWriter.write("\n.method public send_" + handlerDeclaration.getName().getName() + "(LActor;");
 
                 if (handlerDeclaration.getArgs() != null) {
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
@@ -165,10 +260,19 @@ public class byteCodeGenerator implements Visitor {
                 );
                 myWriter.write("invokespecial " + actorFileName + "_" + msgHandlerFileName + "/<init>(L" + actorFileName + ";" + "LActor;");
                 if (handlerDeclaration.getArgs() != null) {
+                    if (currentMsgArgs != null)
+                        currentMsgArgs.clear();
+                    currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
                     }
                     myWriter.write(")V\n");
+                }
+
+                if (handlerDeclaration.getLocalVars() != null) {
+                    for (VarDeclaration varDeclaration : handlerDeclaration.getLocalVars()) {
+                        currentMsgArgs.add(varDeclaration);
+                    }
                 }
                 myWriter.write("invokevirtual " + actorFileName + "/send(LMessage;)V\n" +
                     "return\n" +
@@ -179,7 +283,7 @@ public class byteCodeGenerator implements Visitor {
 //                separator
 
 
-                myWriter.write(".method public " + handlerDeclaration.getName().getName() + "(LActor;");
+                myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(LActor;");
 
                 if (handlerDeclaration.getArgs() != null) {
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
@@ -197,12 +301,6 @@ public class byteCodeGenerator implements Visitor {
             e.printStackTrace();
         }
 
-        if (handlerDeclaration.getLocalVars() != null) {
-            for (VarDeclaration varDeclaration : handlerDeclaration.getLocalVars()) {
-                varDeclaration.accept(this);
-            }
-        }
-
         if (handlerDeclaration.getBody() != null) {
             for (Statement statement : handlerDeclaration.getBody()) {
                 statement.accept(this);
@@ -212,7 +310,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(VarDeclaration varDeclaration) {
-        System.out.println(varDeclaration.toString());
 
         if (varDeclaration.getIdentifier() != null)
             varDeclaration.getIdentifier().accept(this);
@@ -220,7 +317,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Main mainActors) {
-        System.out.println(mainActors.toString());
 
         if (mainActors.getMainActors() != null) {
             for (ActorInstantiation actorInstantiation : mainActors.getMainActors()) {
@@ -231,7 +327,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(ActorInstantiation actorInstantiation) {
-        System.out.println(actorInstantiation.toString());
 
         if (actorInstantiation.getIdentifier() != null)
             actorInstantiation.getIdentifier().accept(this);
@@ -249,7 +344,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(UnaryExpression unaryExpression) {
-        System.out.println(unaryExpression.toString());
 
 //        if (unaryExpression.getUnaryOperator() != null)
 //            System.out.println(unaryExpression.getUnaryOperator());
@@ -259,11 +353,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(BinaryExpression binaryExpression) {
-        System.out.println(binaryExpression.toString());
-        System.out.println("----------------");
-        System.out.println(binaryExpression.getLeft().toString());
-        System.out.println(binaryExpression.getRight().toString());
-        System.out.println("++++++++++++++++");
         if(binaryExpression.getLeft() != null)
             binaryExpression.getLeft().accept(this);
 //        if(binaryExpression.getBinaryOperator() != null)
@@ -274,7 +363,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(ArrayCall arrayCall) {
-        System.out.println(arrayCall.toString());
 
         if (arrayCall.getArrayInstance() != null)
             arrayCall.getArrayInstance().accept(this);
@@ -284,7 +372,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(ActorVarAccess actorVarAccess) {
-        System.out.println(actorVarAccess.toString());
 
         if (actorVarAccess.getSelf() != null)
             actorVarAccess.getSelf().accept(this);
@@ -295,37 +382,30 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Identifier identifier) {
-        System.out.println(identifier.toString());
     }
 
     @Override
     public void visit(Self self) {
-        System.out.println(self.toString());
     }
 
     @Override
     public void visit(Sender sender) {
-        System.out.println(sender.toString());
     }
 
     @Override
     public void visit(BooleanValue value) {
-        System.out.println(value.toString());
     }
 
     @Override
     public void visit(IntValue value) {
-        System.out.println(value.toString());
     }
 
     @Override
     public void visit(StringValue value) {
-        System.out.println(value.toString());
     }
 
     @Override
     public void visit(Block block) {
-        System.out.println(block.toString());
 
         if (block.getStatements() != null) {
             for (Statement statement : block.getStatements()) {
@@ -336,7 +416,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Conditional conditional) {
-        System.out.println(conditional.toString());
 
         if (conditional.getExpression() != null)
             conditional.getExpression().accept(this);
@@ -350,7 +429,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(For loop) {
-        System.out.println(loop.toString());
 
         if (loop.getInitialize() != null)
             loop.getInitialize().accept(this);
@@ -367,17 +445,14 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Break breakLoop) {
-        System.out.println(breakLoop.toString());
     }
 
     @Override
     public void visit(Continue continueLoop) {
-        System.out.println(continueLoop.toString());
     }
 
     @Override
     public void visit(MsgHandlerCall msgHandlerCall) {
-        System.out.println(msgHandlerCall.toString());
 
         if (msgHandlerCall.getInstance() instanceof Self)
             System.out.println("self here@@@@");
@@ -396,15 +471,26 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Print print) {
-        System.out.println(print.toString());
 
-        if (print.getArg() != null)
-            print.getArg().accept(this);
+        if (print.getArg() != null){
+            try {
+                FileWriter myWriter = new FileWriter(actorFileName  + ".j" , true);
+//                System.out.println(my);
+                myWriter.write("getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+                myWriter.write(getLoadCommand(((Identifier)print.getArg()).getName()) +"\n");
+                myWriter.write("invokevirtual java/io/PrintStream/println(" + bytecodeType(getIdType(((Identifier)print.getArg()).getName())) + ")V\n");
+                myWriter.flush();
+                myWriter.close();
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Override
     public void visit(Assign assign) {
-        System.out.println(assign.toString());
 
         if (assign.getlValue() != null)
             assign.getlValue().accept(this);

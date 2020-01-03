@@ -12,7 +12,7 @@ actor A(5){
 		b.foo(i);
 	}
 
-	msghandler bar(int i){
+	msghandler bar(){
 		print(i);
 		sender.foo(i+1);
 	}

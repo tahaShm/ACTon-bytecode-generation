@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/Acton.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/Acton.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/A.j" beforeDir="false" afterPath="$PROJECT_DIR$/A.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/B.j" beforeDir="false" afterPath="$PROJECT_DIR$/B.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sample.act" beforeDir="false" afterPath="$PROJECT_DIR$/sample.act" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -78,7 +78,8 @@
       <option name="presentableId" value="Default" />
       <updated>1577964605220</updated>
       <workItem from="1577964608523" duration="879000" />
-      <workItem from="1577965516851" duration="14121000" />
+      <workItem from="1577965516851" duration="14230000" />
+      <workItem from="1578052269859" duration="9909000" />
     </task>
     <servers />
   </component>
@@ -90,7 +91,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>

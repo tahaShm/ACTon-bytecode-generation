@@ -3,7 +3,6 @@
 
 .field a LA;
 
-
 .method public <init>(I)V
 .limit stack 2
 .limit locals 2
@@ -14,9 +13,17 @@ return
 .end method
 
 .method public setKnownActors(LA;)V
+.limit stack 2
+.limit locals 2
+aload_0
+aload_1
+putfield B/a LA;
+return
+.end method
+
 .method public send_foo(LActor;I)V
 .limit stack 6
-.limit lacals 3
+.limit locals 3
 aload_0
 new B_foo
 dup
@@ -27,4 +34,8 @@ invokespecial B_foo/<init>(LB;LActor;I)V
 invokevirtual B/send(LMessage;)V
 return
 .end method
+
 .method public foo(LActor;I)V
+getstatic java/lang/System/out Ljava/io/PrintStream;
+iload_1
+invokevirtual java/io/PrintStream/println(I)V
