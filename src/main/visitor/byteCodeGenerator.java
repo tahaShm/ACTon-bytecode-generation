@@ -238,6 +238,18 @@ public class byteCodeGenerator implements Visitor {
 
                 myWriter.flush();
                 myWriter.close();
+
+                if (handlerDeclaration.getBody() != null) {
+                    for (Statement statement : handlerDeclaration.getBody()) {
+                        statement.accept(this);
+                    }
+                }
+
+                FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
+                myWriter2.write("return\n" +
+                        ".end method\n");
+                myWriter2.flush();
+                myWriter2.close();
             }
 
             else {
@@ -282,7 +294,6 @@ public class byteCodeGenerator implements Visitor {
 
 //                separator
 
-
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(LActor;");
 
                 if (handlerDeclaration.getArgs() != null) {
@@ -293,18 +304,23 @@ public class byteCodeGenerator implements Visitor {
                 }
 
                 myWriter.flush();
-
                 myWriter.close();
+
+                if (handlerDeclaration.getBody() != null) {
+                    for (Statement statement : handlerDeclaration.getBody()) {
+                        statement.accept(this);
+                    }
+                }
+
+                FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
+                myWriter2.write("return\n" +
+                        ".end method\n");
+                myWriter2.flush();
+                myWriter2.close();
             }
         } catch (IOException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
-        }
-
-        if (handlerDeclaration.getBody() != null) {
-            for (Statement statement : handlerDeclaration.getBody()) {
-                statement.accept(this);
-            }
         }
     }
 

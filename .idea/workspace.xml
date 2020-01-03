@@ -5,7 +5,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/A.j" beforeDir="false" afterPath="$PROJECT_DIR$/A.j" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/B.j" beforeDir="false" afterPath="$PROJECT_DIR$/B.j" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample.act" beforeDir="false" afterPath="$PROJECT_DIR$/sample.act" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -79,7 +78,7 @@
       <updated>1577964605220</updated>
       <workItem from="1577964608523" duration="879000" />
       <workItem from="1577965516851" duration="14230000" />
-      <workItem from="1578052269859" duration="9909000" />
+      <workItem from="1578052269859" duration="10624000" />
     </task>
     <servers />
   </component>

@@ -8,6 +8,7 @@ actor A(5){
 	}
 
 	msghandler initial() {
+	    print(i);
 		i = 2;
 		b.foo(i);
 	}

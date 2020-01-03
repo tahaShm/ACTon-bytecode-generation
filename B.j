@@ -39,3 +39,5 @@ return
 getstatic java/lang/System/out Ljava/io/PrintStream;
 iload_1
 invokevirtual java/io/PrintStream/println(I)V
+return
+.end method
