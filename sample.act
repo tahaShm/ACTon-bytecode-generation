@@ -25,6 +25,7 @@ actor B(2){
 	}
 
 	actorvars {
+	    int x;
 	}
 
 	msghandler foo(int i) {

@@ -2,6 +2,7 @@
 .super Actor
 
 .field a LA;
+.field x I
 
 .method public <init>(I)V
 .limit stack 2

@@ -8,8 +8,12 @@ import main.ast.node.expression.*;
 import main.ast.node.expression.values.BooleanValue;
 import main.ast.node.expression.values.IntValue;
 import main.ast.node.expression.values.StringValue;
+import main.ast.node.expression.values.Value;
 import main.ast.node.statement.*;
-import main.symbolTable.SymbolTable;
+import main.ast.type.Type;
+import main.ast.type.noType.NoType;
+import main.ast.type.primitiveType.BooleanType;
+import main.ast.type.primitiveType.IntType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,11 +21,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class byteCodeGenerator implements Visitor {
-    String actorFileName;
-    String msgHandlerFileName;
-    ArrayList <VarDeclaration> currentMsgArgs;
-    ArrayList <VarDeclaration> currentActorVars;
-    ArrayList <VarDeclaration> currentKnownActors;
+    private String actorFileName;
+    private int labelIndex = 0;
+    private String msgHandlerFileName;
+    private ArrayList <VarDeclaration> currentMsgArgs;
+    private ArrayList <VarDeclaration> currentActorVars;
+    private ArrayList <VarDeclaration> currentKnownActors;
+    private FileWriter expWriter = null;
 
     public String bytecodeType(String type) {
         String ans = "";
@@ -42,19 +48,6 @@ public class byteCodeGenerator implements Visitor {
                 ans = "L" + type + ";";
         }
         return ans;
-    }
-
-    @Override
-    public void visit(Program program) {
-
-        if (program.getActors() != null) {
-            for (ActorDeclaration actorDeclaration : program.getActors()) {
-                actorDeclaration.accept(this);
-            }
-        }
-
-        if (program.getMain() != null)
-            program.getMain().accept(this);
     }
 
     public int getLocalArgIdx(String id) {
@@ -84,12 +77,36 @@ public class byteCodeGenerator implements Visitor {
         return "error";
     }
 
+    public Type getIdTypeType(String id) {
+        for (VarDeclaration varDeclaration : currentMsgArgs) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType();
+        }
+        for (VarDeclaration varDeclaration : currentActorVars) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType();
+        }
+        for (VarDeclaration varDeclaration : currentKnownActors) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType();
+        }
+        return new NoType();
+    }
+
     public String getIdTypeActorVars(String id) {
         for (VarDeclaration varDeclaration : currentActorVars) {
             if (varDeclaration.getIdentifier().getName().equals(id))
                 return varDeclaration.getType().toString();
         }
         return "error";
+    }
+
+    public Type getIdTypeActorVarsType(String id) {
+        for (VarDeclaration varDeclaration : currentActorVars) {
+            if (varDeclaration.getIdentifier().getName().equals(id))
+                return varDeclaration.getType();
+        }
+        return new NoType();
     }
 
     public String getLoadCommand(String id) {
@@ -100,13 +117,25 @@ public class byteCodeGenerator implements Visitor {
             command = "aload_0\n" + "getfield " + actorFileName + "/" + id + " " + bytecodeType(idType);
         }
         else {
+            String idType = getIdType(id);
+            String preCode = "i";
+            if (idType == "string" || idType == "int[]")
+                preCode = "a";
             if (index > 3)
-                command = "iload " + index;
+                command = preCode + "load " + index;
             else
-                command = "iload_" + index;
+                command = preCode + "load_" + index;
         }
         return command;
     }
+
+    public String getFieldLoadCommand(String id) {
+        String command = "";
+        String idType = getIdTypeActorVars(id);
+        command = "aload_0\n" + "getfield " + actorFileName + "/" + id + " " + bytecodeType(idType);
+        return command;
+    }
+
     public String getStoreCommand(String id) {
         int index = getLocalArgIdx(id);
         String command = "";
@@ -121,6 +150,19 @@ public class byteCodeGenerator implements Visitor {
                 command = "istore_" + index;
         }
         return command;
+    }
+
+    @Override
+    public void visit(Program program) {
+
+        if (program.getActors() != null) {
+            for (ActorDeclaration actorDeclaration : program.getActors()) {
+                actorDeclaration.accept(this);
+            }
+        }
+
+        if (program.getMain() != null)
+            program.getMain().accept(this);
     }
 
     @Override
@@ -222,8 +264,8 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(");
 
                 if (handlerDeclaration.getArgs() != null) {
-                    if (currentMsgArgs != null)
-                        currentMsgArgs.clear();
+//                    if (currentMsgArgs != null)
+//                        currentMsgArgs.clear();
                     currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
@@ -272,8 +314,8 @@ public class byteCodeGenerator implements Visitor {
                 );
                 myWriter.write("invokespecial " + actorFileName + "_" + msgHandlerFileName + "/<init>(L" + actorFileName + ";" + "LActor;");
                 if (handlerDeclaration.getArgs() != null) {
-                    if (currentMsgArgs != null)
-                        currentMsgArgs.clear();
+//                    if (currentMsgArgs != null)
+//                        currentMsgArgs.clear();
                     currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
@@ -361,18 +403,25 @@ public class byteCodeGenerator implements Visitor {
     @Override
     public void visit(UnaryExpression unaryExpression) {
 
-//        if (unaryExpression.getUnaryOperator() != null)
-//            System.out.println(unaryExpression.getUnaryOperator());
-        if (unaryExpression.getOperand() != null)
-            unaryExpression.getOperand().accept(this);
+        if (unaryExpression.getOperand() != null) {
+            try {
+                expWriter = new FileWriter(actorFileName + ".j", true);
+                unaryExpression.getOperand().accept(this);
+                Type uExpType = expressionType(unaryExpression.getOperand());
+                expWriter.write(bytecodeType(uExpType.toString()));
+                // we must handle last operand :pp
+                expWriter.flush();
+                expWriter.close();
+            } catch (IOException e){
+
+            }
+        }
     }
 
     @Override
     public void visit(BinaryExpression binaryExpression) {
         if(binaryExpression.getLeft() != null)
             binaryExpression.getLeft().accept(this);
-//        if(binaryExpression.getBinaryOperator() != null)
-//            System.out.println(binaryExpression.getBinaryOperator());
         if(binaryExpression.getRight() != null)
             binaryExpression.getRight().accept(this);
     }
@@ -470,8 +519,6 @@ public class byteCodeGenerator implements Visitor {
     @Override
     public void visit(MsgHandlerCall msgHandlerCall) {
 
-        if (msgHandlerCall.getInstance() instanceof Self)
-            System.out.println("self here@@@@");
         if (msgHandlerCall.getInstance() != null)
             msgHandlerCall.getInstance().accept(this);
 
@@ -491,9 +538,8 @@ public class byteCodeGenerator implements Visitor {
         if (print.getArg() != null){
             try {
                 FileWriter myWriter = new FileWriter(actorFileName  + ".j" , true);
-//                System.out.println(my);
                 myWriter.write("getstatic java/lang/System/out Ljava/io/PrintStream;\n");
-                myWriter.write(getLoadCommand(((Identifier)print.getArg()).getName()) +"\n");
+                myWriter.write(getLoadCommand(((Identifier)print.getArg()).getName()) + "\n");
                 myWriter.write("invokevirtual java/io/PrintStream/println(" + bytecodeType(getIdType(((Identifier)print.getArg()).getName())) + ")V\n");
                 myWriter.flush();
                 myWriter.close();
@@ -513,5 +559,263 @@ public class byteCodeGenerator implements Visitor {
 
         if (assign.getrValue() != null)
             assign.getrValue().accept(this);
+    }
+
+    public Type expressionType(Expression expression) {
+        Type returnType = null;
+
+        if (expression instanceof UnaryExpression) {
+            Expression operand = ((UnaryExpression) expression).getOperand();
+            String operator = ((UnaryExpression) expression).getUnaryOperator().toString();
+            if (operator == "minus" || operator == "preinc" || operator == "postinc" || operator == "predec" || operator == "postdec") {
+                if (expressionType(operand) instanceof IntType) {
+                    try {
+                        switch (operator) {
+                            case "minus":
+                                expWriter.write("ineg\n");
+                                break;
+                            case "preinc":
+                                expWriter.write("iconst_1\n");
+                                expWriter.write("iadd\n");
+                                expWriter.write(getStoreCommand(((Identifier)operand).getName()) + "\n");
+                                break;
+                            case "postinc":
+                                expWriter.write("iconst_1\n");
+                                expWriter.write("iadd\n");
+                                expWriter.write(getStoreCommand(((Identifier)operand).getName()) + "\n");
+                                break;
+                            case "predec":
+                                expWriter.write("iconst_1\n");
+                                expWriter.write("isub\n");
+                                expWriter.write(getStoreCommand(((Identifier)operand).getName()) + "\n");
+                                break;
+                            case "postdec":
+                                expWriter.write("iconst_1\n");
+                                expWriter.write("isub\n");
+                                expWriter.write(getStoreCommand(((Identifier)operand).getName()) + "\n");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    catch (IOException e) {}
+                    returnType = new IntType();
+                }
+                else
+                    returnType = new NoType();
+            } //must be handled
+            else if (operator == "not") {
+                if (expressionType(operand) instanceof BooleanType) {
+                    try {
+                        expWriter.write("ifeq(" + labelIndex + ")\n");
+                        int nElse = labelIndex;
+                        labelIndex++;
+                        expWriter.write("iconst_1\n");
+                        expWriter.write("goto " + labelIndex + "\n");
+                        int nAfter = labelIndex;
+                        labelIndex++;
+                        expWriter.write(  nElse + ": " + labelIndex + "\n");
+                        expWriter.write(nAfter + ": ");
+                        returnType = new BooleanType();
+                    }
+                    catch(IOException e){}
+                }
+                else
+                    returnType = new NoType();
+            }
+        }
+        else if (expression instanceof BinaryExpression) {
+            Expression lOperand = ((BinaryExpression) expression).getLeft();
+            Expression rOperand = ((BinaryExpression) expression).getRight();
+            String operator = ((BinaryExpression) expression).getBinaryOperator().toString();
+            if (operator == "add" || operator == "sub" || operator == "mult" || operator == "div" || operator == "mod") {
+                if (expressionType(lOperand) instanceof IntType && expressionType(rOperand) instanceof IntType) {
+                    returnType = new IntType();
+                    try {
+                        switch (operator) {
+                            case "add":
+                                expWriter.write("iadd\n");
+                                break;
+                            case "sub":
+                                expWriter.write("isub\n");
+                                break;
+                            case "mult":
+                                expWriter.write("imul\n");
+                                break;
+                            case "div":
+                                expWriter.write("idiv\n");
+                                break;
+                            case "mod":
+                                expWriter.write("irem\n");
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                    catch (IOException e) {}
+                }
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "gt" || operator == "lt") {
+                if (expressionType(lOperand) instanceof IntType && expressionType(rOperand) instanceof IntType) {
+                    try {
+                        if (operator == "gt") {
+                            expWriter.write("if_icmpgt " + labelIndex + "\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            expWriter.write(": iconst_1\n");
+                            expWriter.write("goto " + labelIndex + "\n");
+                            int nAfter = labelIndex;
+                            labelIndex++;
+                            expWriter.write(nElse + ": iconst_0\n");
+                            expWriter.write(nAfter + ": ");
+                        }
+                        else if (operator == "lt") {
+                            expWriter.write("if_icmplt " + labelIndex + "\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            expWriter.write(": iconst_1\n");
+                            expWriter.write("goto " + labelIndex + "\n");
+                            int nAfter = labelIndex;
+                            labelIndex++;
+                            expWriter.write(nElse + ": iconst_0\n");
+                            expWriter.write(nAfter + ": ");
+                        }
+                        returnType = new BooleanType();
+                    } catch(IOException e){}
+                }
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "and" || operator == "or") {
+                if (expressionType(lOperand) instanceof BooleanType) {
+                    try {
+                        if (operator == "and") {
+                            expWriter.write("ifeq(" + labelIndex + ")\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            if (expressionType(rOperand) instanceof BooleanType) {
+                                returnType = new BooleanType();
+                                expWriter.write("goto " + labelIndex + "\n");
+                                int nAfter = labelIndex;
+                                labelIndex++;
+                                expWriter.write(nElse + ": iconst_0\n");
+                                expWriter.write(nAfter + ": ");
+                            }
+                            else {
+                                returnType = new NoType();
+                            }
+                        }
+                        else if (operator == "or") {
+                            expWriter.write("ifeq(" + labelIndex + ")\n");
+                            expWriter.write("iconst_1\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            expWriter.write("goto " + labelIndex + "\n");
+                            int nAfter = labelIndex;
+                            labelIndex++;
+                            expWriter.write(nElse + ": ");
+                            if (expressionType(rOperand) instanceof BooleanType) {
+                                returnType = new BooleanType();
+                                expWriter.write(nAfter + ": ");
+                            }
+                            else {
+                                returnType = new NoType();
+                            }
+                        }
+                    }
+                    catch(IOException e){}
+                }
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "assign") {
+                if (expressionType(lOperand).toString() == expressionType(rOperand).toString())
+                    returnType = expressionType(lOperand);
+                else
+                    returnType = new NoType();
+            } //must be handled
+            else if (operator == "eq" || operator == "neq") {
+                if (expressionType(lOperand).toString() == expressionType(rOperand).toString()) {
+                    try {
+                        if (operator == "eq") {
+                            expWriter.write("if_icmpeq " + labelIndex + "\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            expWriter.write(": iconst_1\n");
+                            expWriter.write("goto " + labelIndex + "\n");
+                            int nAfter = labelIndex;
+                            labelIndex++;
+                            expWriter.write(nElse + ": iconst_0\n");
+                            expWriter.write(nAfter + ": ");
+                        }
+                        else if (operator == "neq") {
+                            expWriter.write("if_icmpne " + labelIndex + "\n");
+                            int nElse = labelIndex;
+                            labelIndex++;
+                            expWriter.write(": iconst_1\n");
+                            expWriter.write("goto " + labelIndex + "\n");
+                            int nAfter = labelIndex;
+                            labelIndex++;
+                            expWriter.write(nElse + ": iconst_0\n");
+                            expWriter.write(nAfter + ": ");
+                        }
+                        returnType = new BooleanType();
+                    }
+                    catch(IOException e){}
+                }
+                else
+                    returnType = new NoType();
+            }
+        }
+        else if (expression instanceof Identifier) {
+            returnType = getIdTypeType(((Identifier) expression).getName());
+            try {
+                expWriter.write(getLoadCommand(((Identifier) expression).getName()) + "\n");
+            }
+            catch(IOException e) {}
+        }
+        else if (expression instanceof Value) {
+            try {
+                returnType = expression.getType();
+                if (expression instanceof IntValue) {
+                    int constValue = ((IntValue) expression).getConstant();
+                    if (constValue < 6)
+                        expWriter.write("iconst_" + constValue + "\n");
+                    else
+                        expWriter.write("bipush " + constValue + "\n");
+                } else if (expression instanceof BooleanValue) {
+                    boolean constBool = ((BooleanValue) expression).getConstant();
+                    int constValue = constBool ? 1 : 0;
+                    expWriter.write("iconst_" + constValue + "\n");
+
+                } else if (expression instanceof StringValue) {
+                    String constValue = ((StringValue) expression).getConstant();
+                    expWriter.write("ldc \"" + constValue + "\"\n");
+                }
+            }
+            catch(IOException e) {}
+        }
+        else if (expression instanceof ActorVarAccess) {
+            try {
+                expWriter.write("aload_0\n");
+                expWriter.write(getFieldLoadCommand(((ActorVarAccess) expression).getVariable().getName()) + "\n");
+                returnType = getIdTypeActorVarsType(((ActorVarAccess) expression).getVariable().getName());
+            }
+            catch(IOException e) {}
+        }
+        else if (expression instanceof ArrayCall) {
+            try {
+                Identifier arrayInstance = (Identifier)(((ArrayCall) expression).getArrayInstance());
+                expWriter.write(getLoadCommand(arrayInstance.getName()));
+                expressionType(((ArrayCall) expression).getIndex());
+                expWriter.write("iaload\n");
+                returnType = new IntType();
+            }
+            catch(IOException e) {}
+        }
+
+        return returnType;
     }
 }
