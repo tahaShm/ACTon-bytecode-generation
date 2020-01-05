@@ -141,14 +141,25 @@ public class byteCodeGenerator implements Visitor {
         String command = "";
         if (index == -1){
             String idType = getIdTypeActorVars(id);
-            command = "aload_0\n" + "?????????????????" + "putfield " + actorFileName + "/" + id + " " + idType;
+            command = "aload_0\n" + "putfield " + actorFileName + "/" + id + " " + bytecodeType(idType);
         }
         else {
+            String idType = getIdType(id);
+            String preCode = "i";
+            if (idType == "string" || idType == "int[]")
+                preCode = "a";
             if (index > 3)
-                command = "istore " + index;
+                command = preCode + "store " + index;
             else
-                command = "istore_" + index;
+                command = preCode + "store_" + index;
         }
+        return command;
+    }
+
+    public String getFieldStoreCommand(String id) {
+        String command = "";
+        String idType = getIdTypeActorVars(id);
+        command = "aload_0\n" + "putfield " + actorFileName + "/" + id + " " + bytecodeType(idType);
         return command;
     }
 
@@ -624,7 +635,7 @@ public class byteCodeGenerator implements Visitor {
                     returnType = new NoType();
             }
         }
-        else if (expression instanceof BinaryExpression) {
+        else if (expression instanceof BinaryExpression) { //debugging
             Expression lOperand = ((BinaryExpression) expression).getLeft();
             Expression rOperand = ((BinaryExpression) expression).getRight();
             String operator = ((BinaryExpression) expression).getBinaryOperator().toString();
@@ -656,7 +667,7 @@ public class byteCodeGenerator implements Visitor {
                 }
                 else
                     returnType = new NoType();
-            }
+            } //must be handled
             else if (operator == "gt" || operator == "lt") {
                 if (expressionType(lOperand) instanceof IntType && expressionType(rOperand) instanceof IntType) {
                     try {
@@ -731,11 +742,22 @@ public class byteCodeGenerator implements Visitor {
                     returnType = new NoType();
             }
             else if (operator == "assign") {
-                if (expressionType(lOperand).toString() == expressionType(rOperand).toString())
-                    returnType = expressionType(lOperand);
-                else
-                    returnType = new NoType();
-            } //must be handled
+                try {
+                    if (lOperand instanceof Identifier) {
+                        returnType = expressionType(rOperand);
+                        expWriter.write(getStoreCommand(((Identifier) lOperand).getName()));
+                    } else if (lOperand instanceof ActorVarAccess) {
+                        returnType = expressionType(rOperand);
+                        expWriter.write(getFieldStoreCommand(((ActorVarAccess) expression).getVariable().getName()) + "\n"); //doubt
+                    } else if (lOperand instanceof ArrayCall) {
+                        Identifier arrayInstance = (Identifier)(((ArrayCall) expression).getArrayInstance());
+                        expWriter.write(getLoadCommand(arrayInstance.getName()));
+                        expressionType(((ArrayCall) expression).getIndex());
+                        returnType = expressionType(rOperand);
+                        expWriter.write("iastore\n");
+                    }
+                } catch(IOException e) {}
+            }
             else if (operator == "eq" || operator == "neq") {
                 if (expressionType(lOperand).toString() == expressionType(rOperand).toString()) {
                     try {
