@@ -7,9 +7,7 @@ public class A extends Actor {
     }
 
     public void initial(){
-        boolean x;
-        x = true;
-        x = !x;
+        i = i++;
         b.send_foo(this,2);
     }
 

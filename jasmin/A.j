@@ -3,7 +3,6 @@
 
 .field b LB;
 .field i I
-.field arr [I
 
 .method public <init>(I)V
 .limit stack 2
@@ -15,6 +14,16 @@ return
 .end method
 
 .method public initial()V
+.limit stack 3
+.limit locals 1
+aload_0
+iconst_2
+putfield A/i I
+aload_0
+getfield A/b LB;
+aload_0
+iconst_2
+invokevirtual B/send_foo(LActor;I)V
 return
 .end method
 
@@ -27,7 +36,7 @@ putfield A/b LB;
 return
 .end method
 
-.method public send_bar(LActor;)V
+.method public send_bar(LActor;I)V
 .limit stack 6
 .limit locals 3
 aload_0
@@ -36,24 +45,22 @@ dup
 aload_0
 aload_1
 iload_2
-invokespecial A_bar/<init>(LA;LActor;)V
+invokespecial A_bar/<init>(LA;LActor;I)V
 invokevirtual A/send(LMessage;)V
 return
 .end method
 
-.method public bar(LActor;)V
+.method public bar(LActor;I)V
+.limit stack 4
+.limit locals 3
 getstatic java/lang/System/out Ljava/io/PrintStream;
-dup
+iload_2
+invokevirtual java/io/PrintStream/println(I)V
+aload_1
 aload_0
-getfield A/i I
-dup_x1
+iload_2
 iconst_1
 iadd
-aload_0
-putfield A/i I
-aload_0
-putfield A/i Iaload_0
-getfield A/i I
-invokevirtual java/io/PrintStream/println(I)V
+invokevirtual Actor/send_foo(LActor;I)V
 return
 .end method

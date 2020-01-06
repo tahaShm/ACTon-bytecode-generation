@@ -29,6 +29,9 @@ public class byteCodeGenerator implements Visitor {
     private ArrayList <VarDeclaration> currentActorVars;
     private ArrayList <VarDeclaration> currentKnownActors;
     private FileWriter expWriter = null;
+    private ArrayList <MsgHandlerDeclaration> allMsgHandlers = new ArrayList<>();
+    private ArrayList <String> allActorNames = new ArrayList<>();
+    private ArrayList <ActorInstantiation> allActorInstantiations = new ArrayList<>();
 
     public String bytecodeType(String type) {
         String ans = "";
@@ -164,8 +167,363 @@ public class byteCodeGenerator implements Visitor {
         return command;
     }
 
+    public void makeDefaultActor() {
+        try {
+            FileWriter myWriter = new FileWriter("DefaultActor.j");
+            myWriter.write(".class public DefaultActor\n" +
+                    ".super java/lang/Thread\n" +
+                    "\n" +
+                    ".method public <init>()V\n" +
+                    ".limit stack 1\n" +
+                    ".limit locals 1\n" +
+                    "aload_0\n" +
+                    "invokespecial java/lang/Thread/<init>()V\n" +
+                    "return\n" +
+                    ".end method\n");
+            for (MsgHandlerDeclaration msgHandlerDeclaration: allMsgHandlers) {
+                myWriter.write("\n" +
+                        ".method public send_" + msgHandlerDeclaration.getName().getName() +
+                        "(LActor;");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
+                    myWriter.write(bytecodeType(varDeclaration.getType().toString()));
+                }
+                myWriter.write(")V\n" +
+                        ".limit stack 2\n" +
+                        ".limit locals 16\n" +
+                        "getstatic java/lang/System/out Ljava/io/PrintStream;\n" +
+                        "ldc \"there is no msghandler named " + msgHandlerDeclaration.getName().getName() + " in sender\"\n" +
+                        "invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V\n" +
+                        "return\n" +
+                        ".end method\n");
+            }
+            myWriter.flush();
+            myWriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
+    public void makeMessage() {
+        try {
+            FileWriter myWriter = new FileWriter("Message.j");
+            myWriter.write(".class public abstract Message\n" +
+                    ".super java/lang/Object\n" +
+                    "\n" +
+                    ".method public <init>()V\n" +
+                    ".limit stack 1\n" +
+                    ".limit locals 1\n" +
+                    "0: aload_0\n" +
+                    "1: invokespecial java/lang/Object/<init>()V\n" +
+                    "4: return\n" +
+                    ".end method\n" +
+                    "\n" +
+                    ".method public abstract execute()V\n" +
+                    ".end method");
+            myWriter.flush();
+            myWriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
+    void makeActor() {
+        try {
+            FileWriter myWriter = new FileWriter("Actor.j");
+            myWriter.write(".class public Actor\n" +
+                    ".super DefaultActor\n" +
+                    "\n" +
+                    ".field private queue Ljava/util/ArrayList;\n" +
+                    ".signature \"Ljava/util/ArrayList<LMessage;>;\"\n" +
+                    ".end field\n" +
+                    ".field private lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    ".end field\n" +
+                    ".field queueSize I\n" +
+                    ".end field\n" +
+                    "\n" +
+                    ".method public <init>(I)V\n" +
+                    ".limit stack 3\n" +
+                    ".limit locals 2\n" +
+                    "aload_0\n" +
+                    "invokespecial DefaultActor/<init>()V\n" +
+                    "aload_0\n" +
+                    "new java/util/ArrayList\n" +
+                    "dup\n" +
+                    "invokespecial java/util/ArrayList/<init>()V\n" +
+                    "putfield Actor/queue Ljava/util/ArrayList;\n" +
+                    "aload_0\n" +
+                    "new java/util/concurrent/locks/ReentrantLock\n" +
+                    "dup\n" +
+                    "invokespecial java/util/concurrent/locks/ReentrantLock/<init>()V\n" +
+                    "putfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    "aload_0\n" +
+                    "iload_1\n" +
+                    "putfield Actor/queueSize I\n" +
+                    "return\n" +
+                    ".end method\n" +
+                    "\n" +
+                    ".method public run()V\n" +
+                    ".limit stack 2\n" +
+                    ".limit locals 1\n" +
+                    "Label0:\n" +
+                    "aload_0\n" +
+                    "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    "invokevirtual java/util/concurrent/locks/ReentrantLock/lock()V\n" +
+                    "aload_0\n" +
+                    "getfield Actor/queue Ljava/util/ArrayList;\n" +
+                    "invokevirtual java/util/ArrayList/isEmpty()Z\n" +
+                    "ifne Label31\n" +
+                    "aload_0\n" +
+                    "getfield Actor/queue Ljava/util/ArrayList;\n" +
+                    "iconst_0\n" +
+                    "invokevirtual java/util/ArrayList/remove(I)Ljava/lang/Object;\n" +
+                    "checkcast Message\n" +
+                    "invokevirtual Message/execute()V\n" +
+                    "Label31:\n" +
+                    "aload_0\n" +
+                    "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    "invokevirtual java/util/concurrent/locks/ReentrantLock/unlock()V\n" +
+                    "goto Label0\n" +
+                    ".end method\n" +
+                    "\n" +
+                    ".method public send(LMessage;)V\n" +
+                    ".limit stack 2\n" +
+                    ".limit locals 2\n" +
+                    "aload_0\n" +
+                    "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    "invokevirtual java/util/concurrent/locks/ReentrantLock/lock()V\n" +
+                    "aload_0\n" +
+                    "getfield Actor/queue Ljava/util/ArrayList;\n" +
+                    "invokevirtual java/util/ArrayList/size()I\n" +
+                    "aload_0\n" +
+                    "getfield Actor/queueSize I\n" +
+                    "if_icmpge Label30\n" +
+                    "aload_0\n" +
+                    "getfield Actor/queue Ljava/util/ArrayList;\n" +
+                    "aload_1\n" +
+                    "invokevirtual java/util/ArrayList/add(Ljava/lang/Object;)Z\n" +
+                    "pop\n" +
+                    "Label30:\n" +
+                    "aload_0\n" +
+                    "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
+                    "invokevirtual java/util/concurrent/locks/ReentrantLock/unlock()V\n" +
+                    "return\n" +
+                    ".end method");
+            myWriter.flush();
+            myWriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
+    void makeMessageHandlers() {
+        int counter = 0, iloadCounter;
+        for (MsgHandlerDeclaration msgHandlerDeclaration: allMsgHandlers) {
+            try {
+                iloadCounter = 3;
+                String actorName = allActorNames.get(counter), handlerName = msgHandlerDeclaration.getName().getName();
+                FileWriter myWriter = new FileWriter(actorName + "_" + handlerName + ".j");
+                myWriter.write(".class public " + actorName + "_" + handlerName + "\n");
+                myWriter.write(".super Message\n\n");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
+                    myWriter.write(".field private " + varDeclaration.getIdentifier().getName() + " "
+                            + bytecodeType(varDeclaration.getType().toString()) + "\n");
+                }
+                myWriter.write(".field private receiver L" + actorName + ";\n" +
+                        ".field private sender LActor;\n\n");
+
+                //init
+                myWriter.write(".method public <init>(L" + actorName + ";LActor;");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs())
+                    myWriter.write(bytecodeType(varDeclaration.getType().toString()));
+                myWriter.write(")V\n");
+                myWriter.write(".limit stack 2\n" +
+                        ".limit locals 16\n" +
+                        "aload_0\n" +
+                        "invokespecial Message/<init>()V\n" +
+                        "aload_0\n" +
+                        "aload_1\n");
+                myWriter.write("putfield " + actorName + "_" + handlerName + "/receiver L" + actorName + ";\n");
+                myWriter.write("aload_0\n" +
+                        "aload_2\n");
+                myWriter.write("putfield " + actorName + "_" + handlerName + "/sender LActor;\n");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
+                    myWriter.write("aload_0\n" + "iload");
+                    if (iloadCounter > 3)
+                        myWriter.write(" " + iloadCounter + "\n");
+                    else
+                        myWriter.write("_" + iloadCounter + "\n");
+                    myWriter.write("putfield " + actorName + "_" + handlerName + "/" + varDeclaration.getIdentifier().getName() +
+                            " " + bytecodeType(varDeclaration.getType().toString()) + "\n");
+                    iloadCounter++;
+                }
+                myWriter.write("return\n" +
+                        ".end method\n\n");
+
+                //execute
+                myWriter.write(".method public execute()V\n" +
+                        ".limit stack 3\n" +
+                        ".limit locals 16\n" +
+                        "aload_0\n");
+                myWriter.write("getfield " + actorName + "_" + handlerName + "/receiver L" + actorName + ";\n");
+                myWriter.write("aload_0\n");
+                myWriter.write("getfield " + actorName + "_" + handlerName + "/sender LActor;\n");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
+                    myWriter.write("aload_0\n");
+                    myWriter.write("getfield " + actorName + "_" + handlerName + "/" + varDeclaration.getIdentifier().getName() +
+                            " " + bytecodeType(varDeclaration.getType().toString()) + "\n");
+                }
+                myWriter.write("invokevirtual " + actorName + "/" + handlerName + "(LActor;");
+                for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs())
+                    myWriter.write(bytecodeType(varDeclaration.getType().toString()));
+                myWriter.write(")V\n");
+                myWriter.write("return\n" + ".end method");
+
+                myWriter.flush();
+                myWriter.close();
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+            counter++;
+        }
+    }
+
+    int findQueueSize(ArrayList<ActorDeclaration> actors, String name) {
+        for (ActorDeclaration actorDeclaration: actors) {
+            if (name.equals(actorDeclaration.getName().getName()))
+                return actorDeclaration.getQueueSize();
+        }
+        return -1;
+    }
+
+    boolean hasInitial(String name, ArrayList<ActorDeclaration> actors) {
+        for (ActorDeclaration actorDeclaration: actors) {
+            if (actorDeclaration.getName().getName().equals(name) && actorDeclaration.getInitHandler() != null)
+                return true;
+        }
+        return false;
+    }
+
+    void makeMain(ArrayList<ActorDeclaration> actors) {
+        int aloadNum = 1;
+        try {
+            FileWriter myWriter = new FileWriter("Main.j");
+            myWriter.write(".class public Main\n" +
+                    ".super java/lang/Object\n" +
+                    "\n" +
+                    ".method public <init>()V\n" +
+                    ".limit stack 1\n" +
+                    ".limit locals 1\n" +
+                    "aload_0\n" +
+                    "invokespecial java/lang/Object/<init>()V\n" +
+                    "return\n" +
+                    ".end method\n\n");
+            myWriter.write(".method public static main([Ljava/lang/String;)V\n" +
+                    ".limit stack 16\n" +
+                    ".limit locals 16\n");
+
+            //instantiation
+            int queueSize, instantiationNum = 1;
+            for (ActorInstantiation actorInstantiation: allActorInstantiations) {
+                myWriter.write("new " + actorInstantiation.getType().toString() + "\n" +
+                        "dup\n");
+                queueSize = findQueueSize(actors, actorInstantiation.getType().toString());
+                if (queueSize > 5)
+                    myWriter.write("bipush " + queueSize + "\n");
+                else
+                    myWriter.write("iconst_" + queueSize + "\n");
+                myWriter.write("invokespecial " + actorInstantiation.getType().toString() + "/<init>(I)V\n");
+                myWriter.write("astore");
+                if (instantiationNum > 3)
+                    myWriter.write(" " + instantiationNum + "\n");
+                else
+                    myWriter.write("_" + instantiationNum + "\n");
+                instantiationNum++;
+            }
+
+            //set known actors
+            for (ActorInstantiation actorInstantiation: allActorInstantiations) {
+                myWriter.write("aload");
+                if (aloadNum > 3)
+                    myWriter.write(" " + aloadNum + "\n");
+                else
+                    myWriter.write("_" + aloadNum + "\n");
+                int foundNum;
+                ArrayList<String> knownActorTypes = new ArrayList<>();
+                for (Identifier identifier: actorInstantiation.getKnownActors()) {
+                    foundNum = 1;
+                    for (ActorInstantiation find: allActorInstantiations) {
+                        if (identifier.getName().equals(find.getIdentifier().getName())) {
+                            knownActorTypes.add(bytecodeType(find.getType().toString()));
+                            myWriter.write("aload");
+                            if (foundNum > 3)
+                                myWriter.write(" " + foundNum + "\n");
+                            else
+                                myWriter.write("_" + foundNum + "\n");
+                        }
+                        foundNum++;
+                    }
+                }
+                myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/setKnownActors(");
+                for (String type: knownActorTypes)
+                    myWriter.write(type);
+                myWriter.write(")V\n");
+                aloadNum++;
+            }
+
+            //initialization
+            aloadNum = 1;
+            for (ActorInstantiation actorInstantiation: allActorInstantiations) {
+                ArrayList<String> argTypes = new ArrayList<>();
+                if (hasInitial(actorInstantiation.getType().toString(), actors)) {
+                    if (aloadNum > 3)
+                        myWriter.write("aload " + aloadNum +  "\n");
+                    else
+                        myWriter.write("aload_" + aloadNum +  "\n");
+                    for (Expression initArg: actorInstantiation.getInitArgs()) {
+                        argTypes.add(expressionType(initArg).toString());
+                    }
+                    myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/initial(");
+                    for (String argType: argTypes)
+                        myWriter.write(bytecodeType(argType));
+                    myWriter.write(")V\n");
+                }
+                aloadNum++;
+            }
+
+            //start
+            aloadNum = 1;
+            for (ActorInstantiation actorInstantiation: allActorInstantiations) {
+                if (aloadNum > 3)
+                    myWriter.write("aload " + aloadNum + "\n");
+                else
+                    myWriter.write("aload_" + aloadNum + "\n");
+                myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/start()V\n");
+                aloadNum++;
+            }
+
+            myWriter.write("return\n" +
+                    ".end method");
+            myWriter.flush();
+            myWriter.close();
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void visit(Program program) {
+        makeActor();
+        makeMessage();
 
         if (program.getActors() != null) {
             for (ActorDeclaration actorDeclaration : program.getActors()) {
@@ -173,8 +531,13 @@ public class byteCodeGenerator implements Visitor {
             }
         }
 
+        makeDefaultActor();
+        makeMessageHandlers();
+
         if (program.getMain() != null)
             program.getMain().accept(this);
+
+        makeMain(program.getActors());
     }
 
     @Override
@@ -261,6 +624,8 @@ public class byteCodeGenerator implements Visitor {
 
         if (actorDeclaration.getMsgHandlers() != null) {
             for (MsgHandlerDeclaration msgHandlerDeclaration : actorDeclaration.getMsgHandlers()) {
+                allMsgHandlers.add(msgHandlerDeclaration);
+                allActorNames.add(actorDeclaration.getName().getName());
                 msgHandlerDeclaration.accept(this);
             }
         }
@@ -276,8 +641,6 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(");
 
                 if (handlerDeclaration.getArgs() != null) {
-//                    if (currentMsgArgs != null)
-//                        currentMsgArgs.clear();
                     currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
@@ -329,8 +692,6 @@ public class byteCodeGenerator implements Visitor {
                 );
                 myWriter.write("invokespecial " + actorFileName + "_" + msgHandlerFileName + "/<init>(L" + actorFileName + ";" + "LActor;");
                 if (handlerDeclaration.getArgs() != null) {
-//                    if (currentMsgArgs != null)
-//                        currentMsgArgs.clear();
                     currentMsgArgs = handlerDeclaration.getArgs();
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
@@ -394,6 +755,7 @@ public class byteCodeGenerator implements Visitor {
 
         if (mainActors.getMainActors() != null) {
             for (ActorInstantiation actorInstantiation : mainActors.getMainActors()) {
+                allActorInstantiations.add(actorInstantiation);
                 actorInstantiation.accept(this);
             }
         }
@@ -421,8 +783,6 @@ public class byteCodeGenerator implements Visitor {
         if (unaryExpression.getOperand() != null) {
             unaryExpression.getOperand().accept(this);
             Type uExpType = expressionType(unaryExpression);
-//                expWriter.write(bytecodeType(uExpType.toString()));
-            // we must handle last operand :pp
         }
     }
 
@@ -490,15 +850,54 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Conditional conditional) {
+        if (conditional.getExpression() != null) {
+            expressionType(conditional.getExpression());
+            try {
+                FileWriter myWriter = new FileWriter(actorFileName + ".j", true);
+                myWriter.write("ifeq " + labelIndex + "\n");
+                labelIndex++;
+                myWriter.flush();
+                myWriter.close();
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+//            conditional.getExpression().accept(this);
+        }
 
-        if (conditional.getExpression() != null)
-            conditional.getExpression().accept(this);
-
-        if (conditional.getThenBody() != null)
+        if (conditional.getThenBody() != null) {
             conditional.getThenBody().accept(this);
+            try {
+                expWriter.write("goto " + labelIndex + "\n");
+                labelIndex++;
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        }
 
-        if (conditional.getElseBody() != null)
+        if (conditional.getElseBody() != null) {
+            try {
+                expWriter.write((labelIndex - 2) + ": ");
+                if (conditional.getElseBody() instanceof Block && ((Block)conditional.getElseBody()).getStatements().size() == 0)
+                    expWriter.write("\n");
+            }
+            catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
             conditional.getElseBody().accept(this);
+        }
+
+        try {
+            expWriter.write((labelIndex - 1) + ": ");
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -547,7 +946,6 @@ public class byteCodeGenerator implements Visitor {
         if (print.getArg() != null){
             try {
                 expWriter.write("getstatic java/lang/System/out Ljava/io/PrintStream;\n");
-//                System.out.println(expressionType(print.getArg()));
                 Type expType = expressionType(print.getArg());
                 expWriter.write("invokevirtual java/io/PrintStream/println(" + bytecodeType(expType.toString()) + ")V\n");
             } catch (IOException e) {
@@ -560,12 +958,27 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Assign assign) {
-
-        if (assign.getlValue() != null)
-            assign.getlValue().accept(this);
-
-        if (assign.getrValue() != null)
-            assign.getrValue().accept(this);
+        Expression lOperand = assign.getlValue();
+        Expression rOperand = assign.getrValue();
+        System.out.println("assign in" + assign.getLine());
+        try {
+            if (lOperand != null && rOperand != null) {
+                if (lOperand instanceof Identifier) {
+                    expressionType(rOperand);
+                    expWriter.write(getStoreCommand(((Identifier) lOperand).getName()));
+                } else if (lOperand instanceof ActorVarAccess) {
+                    expWriter.write("aload_0\n");
+                    expressionType(rOperand);
+                    expWriter.write(getFieldStoreCommand(((ActorVarAccess) lOperand).getVariable().getName()) + "\n");
+                } else if (lOperand instanceof ArrayCall) {
+                    Identifier arrayInstance = (Identifier) (((ArrayCall) lOperand).getArrayInstance());
+                    expWriter.write(getLoadCommand(arrayInstance.getName()) + "\n");
+                    expressionType(((ArrayCall) lOperand).getIndex());
+                    expressionType(rOperand);
+                    expWriter.write("iastore\n");
+                }
+            }
+        } catch(IOException e) {}
     }
 
     public Type expressionType(Expression expression) {
@@ -584,8 +997,28 @@ public class byteCodeGenerator implements Visitor {
                 else
                     returnType = new NoType();
             }
+            else if (operator == "not") {
+                if (expressionType(operand) instanceof BooleanType) {
+                    try {
+                        expWriter.write("ifeq " + labelIndex + "\n");
+                        int nElse = labelIndex;
+                        labelIndex++;
+                        expWriter.write("iconst_1\n");
+                        expWriter.write("goto " + labelIndex + "\n");
+                        int nAfter = labelIndex;
+                        labelIndex++;
+                        expWriter.write(  nElse + ": " + "iconst_0\n");
+                        expWriter.write(nAfter + ": ");
+                        returnType = new BooleanType();
+                    }
+                    catch(IOException e){}
+                }
+                else
+                    returnType = new NoType();
+            }
             else if (operator == "postinc" || operator == "preinc" || operator == "predec" || operator == "postdec"){
                 try {
+                    returnType = new IntType();
                     switch (operator) {
                         case "postinc":
                             if (operand instanceof Identifier) {
@@ -696,25 +1129,6 @@ public class byteCodeGenerator implements Visitor {
                     }
                 }catch(IOException e){}
             }
-            else if (operator == "not") {
-                if (expressionType(operand) instanceof BooleanType) {
-                    try {
-                        expWriter.write("ifeq(" + labelIndex + ")\n");
-                        int nElse = labelIndex;
-                        labelIndex++;
-                        expWriter.write("iconst_1\n");
-                        expWriter.write("goto " + labelIndex + "\n");
-                        int nAfter = labelIndex;
-                        labelIndex++;
-                        expWriter.write(  nElse + ": " + "iconst_0\n");
-                        expWriter.write(nAfter + ": ");
-                        returnType = new BooleanType();
-                    }
-                    catch(IOException e){}
-                }
-                else
-                    returnType = new NoType();
-            }
         }
 
         else if (expression instanceof BinaryExpression) {
@@ -785,7 +1199,7 @@ public class byteCodeGenerator implements Visitor {
                 if (expressionType(lOperand) instanceof BooleanType) {
                     try {
                         if (operator == "and") {
-                            expWriter.write("ifeq(" + labelIndex + ")\n");
+                            expWriter.write("ifeq " + labelIndex + "\n");
                             int nElse = labelIndex;
                             labelIndex++;
                             if (expressionType(rOperand) instanceof BooleanType) {
@@ -801,7 +1215,7 @@ public class byteCodeGenerator implements Visitor {
                             }
                         }
                         else if (operator == "or") {
-                            expWriter.write("ifeq(" + labelIndex + ")\n");
+                            expWriter.write("ifeq " + labelIndex + "\n");
                             expWriter.write("iconst_1\n");
                             int nElse = labelIndex;
                             labelIndex++;
@@ -871,13 +1285,13 @@ public class byteCodeGenerator implements Visitor {
                     else if (lOperand instanceof ActorVarAccess) {
                         expWriter.write("aload_0\n");
                         returnType = expressionType(rOperand);
-                        expWriter.write(getFieldStoreCommand(((ActorVarAccess) expression).getVariable().getName()) + "\n");
-                        expWriter.write(getFieldLoadCommand(((ActorVarAccess) expression).getVariable().getName()) + "\n");
+                        expWriter.write(getFieldStoreCommand(((ActorVarAccess) lOperand).getVariable().getName()) + "\n");
+                        expWriter.write(getFieldLoadCommand(((ActorVarAccess) lOperand).getVariable().getName()) + "\n");
                     }
                     else if (lOperand instanceof ArrayCall) {
-                        Identifier arrayInstance = (Identifier)(((ArrayCall) expression).getArrayInstance());
+                        Identifier arrayInstance = (Identifier)(((ArrayCall) lOperand).getArrayInstance());
                         expWriter.write(getLoadCommand(arrayInstance.getName()) + "\n");
-                        expressionType(((ArrayCall) expression).getIndex());
+                        expressionType(((ArrayCall) lOperand).getIndex());
                         returnType = expressionType(rOperand);
                         expWriter.write("iastore\n");
                         expressionType(lOperand);

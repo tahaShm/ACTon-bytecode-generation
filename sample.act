@@ -9,15 +9,12 @@ actor A(5){
 	}
 
 	msghandler initial() {
-		i = 2 + 2;
 		b.foo(i);
-		i = i + 4;
 	}
 
 	msghandler bar(){
-	    int ar[5];
-		sender.foo(i+1);
-		print(self.arr[1] + 2 * 3 + i);
+		//sender.foo(i+1);
+		print(i = i++);
 	}
 }
 
