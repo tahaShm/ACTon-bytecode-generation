@@ -185,7 +185,7 @@ public class byteCodeGenerator implements Visitor {
             actorFile.createNewFile();
             actorFileName = actorDeclaration.getName().getName();
         } catch (IOException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred1.");
             e.printStackTrace();
         }
 
@@ -220,7 +220,7 @@ public class byteCodeGenerator implements Visitor {
             myWriter.flush();
             myWriter.close();
         } catch (IOException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred2.");
             e.printStackTrace();
         }
 
@@ -255,7 +255,7 @@ public class byteCodeGenerator implements Visitor {
             myWriter.flush();
             myWriter.close();
         } catch (IOException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred3.");
             e.printStackTrace();
         }
 
@@ -294,9 +294,12 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.close();
 
                 if (handlerDeclaration.getBody() != null) {
+                    expWriter = new FileWriter(actorFileName + ".j", true);
                     for (Statement statement : handlerDeclaration.getBody()) {
                         statement.accept(this);
                     }
+                    expWriter.flush();
+                    expWriter.close();
                 }
 
                 FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
@@ -346,8 +349,6 @@ public class byteCodeGenerator implements Visitor {
                 );
                 myWriter.flush();
 
-//                separator
-
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(LActor;");
 
                 if (handlerDeclaration.getArgs() != null) {
@@ -361,9 +362,12 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.close();
 
                 if (handlerDeclaration.getBody() != null) {
+                    expWriter = new FileWriter(actorFileName + ".j", true);
                     for (Statement statement : handlerDeclaration.getBody()) {
                         statement.accept(this);
                     }
+                    expWriter.flush();
+                    expWriter.close();
                 }
 
                 FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
@@ -373,7 +377,7 @@ public class byteCodeGenerator implements Visitor {
                 myWriter2.close();
             }
         } catch (IOException e) {
-            System.out.println("An error occurred.");
+            System.out.println("An error occurred4.");
             e.printStackTrace();
         }
     }
@@ -414,28 +418,22 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(UnaryExpression unaryExpression) {
-
         if (unaryExpression.getOperand() != null) {
-            try {
-                expWriter = new FileWriter(actorFileName + ".j", true);
-                unaryExpression.getOperand().accept(this);
-                Type uExpType = expressionType(unaryExpression.getOperand());
-                expWriter.write(bytecodeType(uExpType.toString()));
-                // we must handle last operand :pp
-                expWriter.flush();
-                expWriter.close();
-            } catch (IOException e){
-
-            }
+            unaryExpression.getOperand().accept(this);
+            Type uExpType = expressionType(unaryExpression);
+//                expWriter.write(bytecodeType(uExpType.toString()));
+            // we must handle last operand :pp
         }
     }
 
     @Override
     public void visit(BinaryExpression binaryExpression) {
-        if(binaryExpression.getLeft() != null)
+
+        if(binaryExpression.getLeft() != null && binaryExpression.getRight() != null) {
             binaryExpression.getLeft().accept(this);
-        if(binaryExpression.getRight() != null)
             binaryExpression.getRight().accept(this);
+            Type lType = expressionType(binaryExpression);
+        }
     }
 
     @Override
@@ -483,7 +481,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Block block) {
-
         if (block.getStatements() != null) {
             for (Statement statement : block.getStatements()) {
                 statement.accept(this);
@@ -549,12 +546,10 @@ public class byteCodeGenerator implements Visitor {
 
         if (print.getArg() != null){
             try {
-                FileWriter myWriter = new FileWriter(actorFileName  + ".j" , true);
-                myWriter.write("getstatic java/lang/System/out Ljava/io/PrintStream;\n");
-                myWriter.write(getLoadCommand(((Identifier)print.getArg()).getName()) + "\n");
-                myWriter.write("invokevirtual java/io/PrintStream/println(" + bytecodeType(getIdType(((Identifier)print.getArg()).getName())) + ")V\n");
-                myWriter.flush();
-                myWriter.close();
+                expWriter.write("getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+//                System.out.println(expressionType(print.getArg()));
+                Type expType = expressionType(print.getArg());
+                expWriter.write("invokevirtual java/io/PrintStream/println(" + bytecodeType(expType.toString()) + ")V\n");
             } catch (IOException e) {
                 System.out.println("An error occurred.");
                 e.printStackTrace();
@@ -721,6 +716,7 @@ public class byteCodeGenerator implements Visitor {
                     returnType = new NoType();
             }
         }
+
         else if (expression instanceof BinaryExpression) {
             Expression lOperand = ((BinaryExpression) expression).getLeft();
             Expression rOperand = ((BinaryExpression) expression).getRight();
@@ -870,7 +866,7 @@ public class byteCodeGenerator implements Visitor {
                     if (lOperand instanceof Identifier) {
                         returnType = expressionType(rOperand);
                         expWriter.write(getStoreCommand(((Identifier) lOperand).getName()));
-                        expWriter.write(getLoadCommand(((Identifier) lOperand).getName()));
+                        expWriter.write(getLoadCommand(((Identifier) lOperand).getName()) + "\n");
                     }
                     else if (lOperand instanceof ActorVarAccess) {
                         expWriter.write("aload_0\n");
@@ -880,7 +876,7 @@ public class byteCodeGenerator implements Visitor {
                     }
                     else if (lOperand instanceof ArrayCall) {
                         Identifier arrayInstance = (Identifier)(((ArrayCall) expression).getArrayInstance());
-                        expWriter.write(getLoadCommand(arrayInstance.getName()));
+                        expWriter.write(getLoadCommand(arrayInstance.getName()) + "\n");
                         expressionType(((ArrayCall) expression).getIndex());
                         returnType = expressionType(rOperand);
                         expWriter.write("iastore\n");
@@ -890,6 +886,7 @@ public class byteCodeGenerator implements Visitor {
             }
 
         }
+
         else if (expression instanceof Identifier) {
             returnType = getIdTypeType(((Identifier) expression).getName());
             try {
@@ -897,6 +894,7 @@ public class byteCodeGenerator implements Visitor {
             }
             catch(IOException e) {}
         }
+
         else if (expression instanceof Value) {
             try {
                 returnType = expression.getType();
@@ -913,11 +911,12 @@ public class byteCodeGenerator implements Visitor {
 
                 } else if (expression instanceof StringValue) {
                     String constValue = ((StringValue) expression).getConstant();
-                    expWriter.write("ldc \"" + constValue + "\"\n");
+                    expWriter.write("ldc " + constValue + "\n");
                 }
             }
             catch(IOException e) {}
         }
+
         else if (expression instanceof ActorVarAccess) {
             try {
                 expWriter.write("aload_0\n");
@@ -926,10 +925,11 @@ public class byteCodeGenerator implements Visitor {
             }
             catch(IOException e) {}
         }
+
         else if (expression instanceof ArrayCall) {
             try {
-                Identifier arrayInstance = (Identifier)(((ArrayCall) expression).getArrayInstance());
-                expWriter.write(getLoadCommand(arrayInstance.getName()));
+                Expression arrayInstance = ((ArrayCall) expression).getArrayInstance();
+                expressionType(arrayInstance);
                 expressionType(((ArrayCall) expression).getIndex());
                 expWriter.write("iaload\n");
                 returnType = new IntType();

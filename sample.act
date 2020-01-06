@@ -5,17 +5,19 @@ actor A(5){
 
 	actorvars {
 		int i;
+		int arr[3];
 	}
 
 	msghandler initial() {
-	    print(i);
-		i = 2;
+		i = 2 + 2;
 		b.foo(i);
+		i = i + 4;
 	}
 
 	msghandler bar(){
-		print(i);
+	    int ar[5];
 		sender.foo(i+1);
+		print(self.arr[1] + 2 * 3 + i);
 	}
 }
 
@@ -29,7 +31,6 @@ actor B(2){
 	}
 
 	msghandler foo(int i) {
-		print(i);
 		sender.bar(i+1);
 	}
 }

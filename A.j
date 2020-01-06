@@ -3,6 +3,7 @@
 
 .field b LB;
 .field i I
+.field arr [I
 
 .method public <init>(I)V
 .limit stack 2
@@ -14,10 +15,13 @@ return
 .end method
 
 .method public initial()V
-getstatic java/lang/System/out Ljava/io/PrintStream;
+iconst_2
+iconst_2
+iadd
 aload_0
 getfield A/i I
-invokevirtual java/io/PrintStream/println(I)V
+iconst_4
+iadd
 return
 .end method
 
@@ -30,7 +34,7 @@ putfield A/b LB;
 return
 .end method
 
-.method public send_bar(LActor;I)V
+.method public send_bar(LActor;)V
 .limit stack 6
 .limit locals 3
 aload_0
@@ -39,15 +43,29 @@ dup
 aload_0
 aload_1
 iload_2
-invokespecial A_bar/<init>(LA;LActor;I)V
+invokespecial A_bar/<init>(LA;LActor;)V
 invokevirtual A/send(LMessage;)V
 return
 .end method
 
-.method public bar(LActor;I)V
-getstatic java/lang/System/out Ljava/io/PrintStream;
+.method public bar(LActor;[I)V
 aload_0
 getfield A/i I
+iconst_1
+iadd
+getstatic java/lang/System/out Ljava/io/PrintStream;
+aload_0
+aload_0
+getfield A/arr [I
+iconst_1
+iaload
+iconst_2
+iconst_3
+imul
+iadd
+aload_0
+getfield A/i I
+iadd
 invokevirtual java/io/PrintStream/println(I)V
 return
 .end method

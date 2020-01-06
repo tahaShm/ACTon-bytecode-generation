@@ -37,8 +37,8 @@ return
 .end method
 
 .method public foo(LActor;I)V
-getstatic java/lang/System/out Ljava/io/PrintStream;
 iload_1
-invokevirtual java/io/PrintStream/println(I)V
+iconst_1
+iadd
 return
 .end method
