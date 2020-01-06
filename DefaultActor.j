@@ -9,7 +9,7 @@ invokespecial java/lang/Thread/<init>()V
 return
 .end method
 
-.method public send_bar(LActor;)V
+.method public send_bar(LActor;I)V
 .limit stack 2
 .limit locals 16
 getstatic java/lang/System/out Ljava/io/PrintStream;

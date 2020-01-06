@@ -7,8 +7,11 @@ public class A extends Actor {
     }
 
     public void initial(){
-        i = i++;
-        b.send_foo(this,2);
+        int j;
+        int k;
+        k = 0;
+        j = k++;
+//        b.send_foo(this,2);
     }
 
     public void setKnownActors(B b){

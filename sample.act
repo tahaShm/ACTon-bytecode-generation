@@ -14,7 +14,14 @@ actor A(5){
 
 	msghandler bar(){
 		//sender.foo(i+1);
-		print(i = i++);
+		int j;
+		//j = i++;
+		if (j < 3) {
+		    if (j > 6) {
+		        j = 2;
+		    }
+		}
+		//print(1);
 	}
 }
 

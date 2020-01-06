@@ -4,6 +4,8 @@
     <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/A.j" beforeDir="false" afterPath="$PROJECT_DIR$/A.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/A_bar.j" beforeDir="false" afterPath="$PROJECT_DIR$/A_bar.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DefaultActor.j" beforeDir="false" afterPath="$PROJECT_DIR$/DefaultActor.j" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/java/A.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/A.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/java/A.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/A.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sample.act" beforeDir="false" afterPath="$PROJECT_DIR$/sample.act" afterDir="false" />
@@ -85,7 +87,7 @@
       <workItem from="1578143075424" duration="8789000" />
       <workItem from="1578226446806" duration="14059000" />
       <workItem from="1578255731334" duration="1877000" />
-      <workItem from="1578294321363" duration="20308000" />
+      <workItem from="1578294321363" duration="24822000" />
     </task>
     <servers />
   </component>

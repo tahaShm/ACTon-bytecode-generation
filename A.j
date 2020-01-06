@@ -41,19 +41,26 @@ invokevirtual A/send(LMessage;)V
 return
 .end method
 
-.method public bar(LActor;)V
-getstatic java/lang/System/out Ljava/io/PrintStream;
-dup
-aload_0
-getfield A/i I
-dup_x1
+.method public bar(LActor;I)V
+iload_1
+iconst_3
+if_icmplt 0
 iconst_1
-iadd
-aload_0
-putfield A/i I
-aload_0
-putfield A/i Iaload_0
-getfield A/i I
-invokevirtual java/io/PrintStream/println(I)V
-return
+goto 1
+0: iconst_0
+1: ifeq 2
+iload_1
+bipush 6
+if_icmpgt 3
+iconst_1
+goto 4
+3: iconst_0
+4: ifeq 5
+iconst_2
+istore_1
+goto 6
+5: 
+6: goto 7
+2: 
+7: return
 .end method
