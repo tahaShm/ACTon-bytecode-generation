@@ -1,11 +1,10 @@
 .class public A_bar
 .super Message
 
-.field private j I
 .field private receiver LA;
 .field private sender LActor;
 
-.method public <init>(LA;LActor;I)V
+.method public <init>(LA;LActor;)V
 .limit stack 2
 .limit locals 16
 aload_0
@@ -16,9 +15,6 @@ putfield A_bar/receiver LA;
 aload_0
 aload_2
 putfield A_bar/sender LActor;
-aload_0
-iload_3
-putfield A_bar/j I
 return
 .end method
 
@@ -29,8 +25,6 @@ aload_0
 getfield A_bar/receiver LA;
 aload_0
 getfield A_bar/sender LActor;
-aload_0
-getfield A_bar/j I
-invokevirtual A/bar(LActor;I)V
+invokevirtual A/bar(LActor;)V
 return
 .end method

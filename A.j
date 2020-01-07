@@ -15,6 +15,8 @@ return
 .end method
 
 .method public initial()V
+aload_0
+getfield A/b LB;aload_0
 return
 .end method
 
@@ -24,6 +26,24 @@ return
 aload_0
 aload_1
 putfield A/b LB;
+return
+.end method
+
+.method public send_bar22(LActor;I)V
+.limit stack 6
+.limit locals 3
+aload_0
+new A_bar22
+dup
+aload_0
+aload_1
+iload_2
+invokespecial A_bar22/<init>(LA;LActor;I)V
+invokevirtual A/send(LMessage;)V
+return
+.end method
+
+.method public bar22(LActor;I)V
 return
 .end method
 
@@ -41,26 +61,15 @@ invokevirtual A/send(LMessage;)V
 return
 .end method
 
-.method public bar(LActor;I)V
-iload_1
-iconst_3
-if_icmplt 0
-iconst_1
-goto 1
-0: iconst_0
-1: ifeq 2
-iload_1
-bipush 6
-if_icmpgt 3
-iconst_1
-goto 4
-3: iconst_0
-4: ifeq 5
+.method public bar(LActor;)V
+aload 4
 iconst_2
+dup2
+iaload
+iconst_1
+iadd
+dup_x2
+iastore
 istore_1
-goto 6
-5: 
-6: goto 7
-2: 
-7: return
+return
 .end method

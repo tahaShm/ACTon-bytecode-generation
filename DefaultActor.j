@@ -9,7 +9,16 @@ invokespecial java/lang/Thread/<init>()V
 return
 .end method
 
-.method public send_bar(LActor;I)V
+.method public send_bar22(LActor;I)V
+.limit stack 2
+.limit locals 16
+getstatic java/lang/System/out Ljava/io/PrintStream;
+ldc "there is no msghandler named bar22 in sender"
+invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
+return
+.end method
+
+.method public send_bar(LActor;)V
 .limit stack 2
 .limit locals 16
 getstatic java/lang/System/out Ljava/io/PrintStream;

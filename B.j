@@ -37,6 +37,7 @@ return
 .end method
 
 .method public foo(LActor;I)V
+aload_0
 iload_1
 iconst_1
 iadd

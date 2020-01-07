@@ -7,10 +7,11 @@ public class A extends Actor {
     }
 
     public void initial(){
-        int j;
-        int k;
-        k = 0;
-        j = k++;
+        int j = 0;
+        int k = 2;
+        int arr[];
+        arr = new int[3];
+        j = ++arr[2];
 //        b.send_foo(this,2);
     }
 

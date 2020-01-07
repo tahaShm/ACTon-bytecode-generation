@@ -11,16 +11,21 @@ actor A(5){
 	msghandler initial() {
 		b.foo(i);
 	}
-
+    msghandler bar22(int aaa){
+    }
 	msghandler bar(){
 		//sender.foo(i+1);
 		int j;
-		//j = i++;
-		if (j < 3) {
-		    if (j > 6) {
-		        j = 2;
-		    }
-		}
+		int k;
+		int l;
+		int ar[3];
+		string s;
+		boolean bb;
+		boolean bb2;
+		j = ++ar[2];
+		//i = 2;
+		//j = arr[2] = arr[2] + i * j + 2;
+
 		//print(1);
 	}
 }
