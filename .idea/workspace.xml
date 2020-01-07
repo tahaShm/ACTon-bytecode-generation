@@ -3,19 +3,16 @@
   <component name="ChangeListManager">
     <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/A.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/A_bar.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/A_bar22.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Actor.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/B.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/B_foo.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DefaultActor.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Main.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Message.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/bar.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/foo.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/initial.j" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/compiler_p4/main/visitor/byteCodeGenerator.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/compiler_p4/main/visitor/byteCodeGenerator.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/A.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A_bar.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A_bar22.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/B.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/B_foo.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/DefaultActor.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/DefaultActor.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/Main.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/Main.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sample.act" beforeDir="false" afterPath="$PROJECT_DIR$/sample.act" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/Acton.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/Acton.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -111,7 +108,7 @@
       <workItem from="1578294321363" duration="24937000" />
       <workItem from="1578344572103" duration="2269000" />
       <workItem from="1578377846750" duration="9355000" />
-      <workItem from="1578390823248" duration="5475000" />
+      <workItem from="1578390823248" duration="9349000" />
     </task>
     <servers />
   </component>

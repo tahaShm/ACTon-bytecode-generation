@@ -34,6 +34,17 @@ public class byteCodeGenerator implements Visitor {
     private ArrayList<Integer> endLoopLabel = new ArrayList<>();
     private ArrayList<Integer> updateLoopLabel = new ArrayList<>();
 
+    public void deleteOutputFiles(){
+        File dir = new File("output");
+        if (dir.listFiles() != null) {
+            for (File file : dir.listFiles())
+                if (!file.isDirectory()) {
+                    if (!file.getName().equals("jasmin.jar"))
+                        file.delete();
+                }
+        }
+    }
+
     public String bytecodeType(String type) {
         String ans = "";
         switch(type) {
@@ -60,7 +71,7 @@ public class byteCodeGenerator implements Visitor {
         for (VarDeclaration varDeclaration : currentMsgArgs) {
             idx++;
             if (varDeclaration.getIdentifier().getName().equals(id)) {
-                return idx;
+                return idx + 1;
             }
         }
         return -1;
@@ -555,6 +566,7 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(Program program) {
+        deleteOutputFiles();
         makeActor();
         makeMessage();
 
@@ -672,6 +684,8 @@ public class byteCodeGenerator implements Visitor {
                     }
                     myWriter.write(")V\n");
                 }
+                myWriter.write(".limit stack 16\n");
+                myWriter.write(".limit locals 16\n");
                 if (handlerDeclaration.getLocalVars() != null) {
                     for (VarDeclaration varDeclaration : handlerDeclaration.getLocalVars()) {
                         currentMsgArgs.add(varDeclaration);
@@ -743,7 +757,8 @@ public class byteCodeGenerator implements Visitor {
                     }
                     myWriter.write(")V\n");
                 }
-
+                myWriter.write(".limit stack 16\n");
+                myWriter.write(".limit locals 16\n");
                 myWriter.flush();
                 myWriter.close();
 
@@ -908,7 +923,8 @@ public class byteCodeGenerator implements Visitor {
             try {
                 expWriter.write((nElse) + ": ");
                 if (conditional.getElseBody() instanceof Block && ((Block)conditional.getElseBody()).getStatements().size() == 0)
-                    expWriter.write("\n");
+                    expWriter.write("nop\n");
+
             }
             catch (IOException e) {
                 System.out.println("An error occurred.");
@@ -918,13 +934,13 @@ public class byteCodeGenerator implements Visitor {
         }
         else {
             try {
-                expWriter.write((nElse) + ": \n");
+                expWriter.write((nElse) + ": nop\n");
             }
             catch (IOException e) {}
         }
 
         try {
-            expWriter.write((nAfter) + ": ");
+            expWriter.write((nAfter) + ": nop\n");
         }
         catch (IOException e) {
             System.out.println("An error occurred.");
@@ -968,7 +984,7 @@ public class byteCodeGenerator implements Visitor {
                 loop.getUpdate().accept(this);
 
             expWriter.write("goto " + beginLoop + "\n");
-            expWriter.write(endLoop + ": ");
+            expWriter.write(endLoop + ": nop\n");
         }
         catch (IOException e) {
             System.out.println("An error occurred.");
@@ -1084,7 +1100,7 @@ public class byteCodeGenerator implements Visitor {
                     expressionType(rOperand);
                     expWriter.write(getFieldStoreCommand(((ActorVarAccess) lOperand).getVariable().getName()) + "\n");
                 } else if (lOperand instanceof ArrayCall) {
-                    Identifier arrayInstance = (Identifier) (((ArrayCall) lOperand).getArrayInstance());
+                    Expression arrayInstance = ((ArrayCall) lOperand).getArrayInstance();
                     expressionType(arrayInstance);
                     expressionType(((ArrayCall) lOperand).getIndex());
                     expressionType(rOperand);
@@ -1121,7 +1137,7 @@ public class byteCodeGenerator implements Visitor {
                         int nAfter = labelIndex;
                         labelIndex++;
                         expWriter.write(  nElse + ": " + "iconst_0\n");
-                        expWriter.write(nAfter + ": \n");
+                        expWriter.write(nAfter + ": nop\n");
                         returnType = new BooleanType();
                     }
                     catch(IOException e){}
@@ -1289,7 +1305,7 @@ public class byteCodeGenerator implements Visitor {
                             int nAfter = labelIndex;
                             labelIndex++;
                             expWriter.write(nElse + ": iconst_1\n");
-                            expWriter.write(nAfter + ": \n");
+                            expWriter.write(nAfter + ": nop\n");
                         }
                         else if (operator == "lt") {
                             expWriter.write("if_icmplt " + labelIndex + "\n");
@@ -1300,7 +1316,7 @@ public class byteCodeGenerator implements Visitor {
                             int nAfter = labelIndex;
                             labelIndex++;
                             expWriter.write(nElse + ": iconst_1\n");
-                            expWriter.write(nAfter + ": \n");
+                            expWriter.write(nAfter + ": nop\n");
                         }
                         returnType = new BooleanType();
                     } catch(IOException e){}
@@ -1321,7 +1337,7 @@ public class byteCodeGenerator implements Visitor {
                                 int nAfter = labelIndex;
                                 labelIndex++;
                                 expWriter.write(nElse + ": iconst_0\n");
-                                expWriter.write(nAfter + ": \n");
+                                expWriter.write(nAfter + ": nop\n");
                             }
                             else {
                                 returnType = new NoType();
@@ -1338,7 +1354,7 @@ public class byteCodeGenerator implements Visitor {
                             expWriter.write(nElse + ": ");
                             if (expressionType(rOperand) instanceof BooleanType) {
                                 returnType = new BooleanType();
-                                expWriter.write(nAfter + ": \n");
+                                expWriter.write(nAfter + ": nop\n");
                             }
                             else {
                                 returnType = new NoType();
@@ -1369,7 +1385,7 @@ public class byteCodeGenerator implements Visitor {
                             int nAfter = labelIndex;
                             labelIndex++;
                             expWriter.write(nElse + ": iconst_1\n");
-                            expWriter.write(nAfter + ": \n");
+                            expWriter.write(nAfter + ": nop\n");
                         }
                         else if (operator == "neq") {
                             expWriter.write("if_" + objectType + "cmpne " + labelIndex + "\n");
@@ -1380,7 +1396,7 @@ public class byteCodeGenerator implements Visitor {
                             int nAfter = labelIndex;
                             labelIndex++;
                             expWriter.write(nElse + ": iconst_1\n");
-                            expWriter.write(nAfter + ": \n");
+                            expWriter.write(nAfter + ": nop\n");
                         }
                         returnType = new BooleanType();
                     } catch (IOException e) {}

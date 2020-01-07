@@ -1,50 +1,156 @@
-actor A(5){
-	knownactors {
-		B b;
-	}
+actor A(10) {
+    knownactors {
 
-	actorvars {
-		int i;
-		int arr[3];
-	}
-
-	msghandler initial() {
-		b.foo(i);
-	}
-    msghandler bar22(int aaa){
     }
-	msghandler bar(){
-		//sender.foo(i+1);
-		int j;
-		int k;
-		int l;
-		int ar[3];
-		string s;
-		boolean bb;
-		boolean bb2;
-		j = ++ar[2];
-		//i = 2;
-		//j = arr[2] = arr[2] + i * j + 2;
+    actorvars {
+        int i;
+        boolean j;
+        string k;
+        int r[5];
+    }
+    msghandler initial(int i, boolean j, string k, int e) {
+        self.i = i + 1;
+        self.j = (j && true) || false;
+        self.k = k;
+        self.foo(e);
+    }
+    msghandler foo(int r) {
+        int i;
+        int y;
+        boolean f;
+        int array[5];
+        string o;
+        self.r[1] = 1;
+        self.r[3] = array[0] + r;
+        print(r);
+        print(i);
+        print(o);
+        print(self.i);
+        print(j);
+        print(self.k);
+        print(self.r);
+        print(self.i++);
+        print(self.i);
+        y = 1;
+        print("--------------------------------");
+        i = y++ + array[1]++ + self.i++;
+        print(i);
+        print(y);
+        print(array[1]);
+        print(self.i);
+        print("--------------------------------");
+        i = y-- + array[1]-- + self.i--;
+        print(i);
+        print(y);
+        print(array[1]);
+        print(self.i);
+        print("--------------------------------");
+        i = ++y + ++array[1] + ++self.i;
+        print(i);
+        print(y);
+        print(array[1]);
+        print(self.i);
+        print("--------------------------------");
+        i = --y + --array[1] + --self.i;
+        print(i);
+        print(y);
+        print(array[1]);
+        print(self.i);
+        print("--------------------------------");
+        print(self.i++ + --self.i);
+        print("--------------------------------");
+        f = true && false;
+        print(f);
+        f = true && !false;
+        print(f);
+        f = true && self.j;
+        print(f);
+        f = true && !self.j;
+        print(f);
+        f = true && !!!self.j;
+        print(f);
+        f = false && self.j;
+        print(f);
+        f = false && true;
+        print(f);
+        f = false && !!true;
+        print(f);
+        f = false && false;
+        print(f);
+        f = false && !!false;
+        print(f);
+        f = self.j && true;
+        print(f);
+        f = !self.j && true;
+        print(f);
+        f = !!!self.j && true;
+        print(f);
+        f = self.j && false;
+        print(f);
+        f = !!true && false;
+        print(f);
+        print("--------------------------------");
+        f = true || false;
+        print(f);
+        f = true || !false;
+        print(f);
+        f = true || self.j;
+        print(f);
+        f = true || !self.j;
+        print(f);
+        f = true || !!!self.j;
+        print(f);
+        f = false || self.j;
+        print(f);
+        f = false || true;
+        print(f);
+        f = false || !!true;
+        print(f);
+        f = false || false;
+        print(f);
+        f = false || !!false;
+        print(f);
+        f = self.j || true;
+        print(f);
+        f = !self.j || true;
+        print(f);
+        f = !!!self.j || true;
+        print(f);
+        f = self.j || false;
+        print(f);
+        f = !!true || false;
+        print(f);
+        print("--------------------------------");
+        print(array == self.r);
+        array = self.r = self.r;
+        print(array == self.r);
+        print(i);
+        print(array[2]);
+        print(self.i);
+        i = array[2] = self.i;
+        print(i);
+        print(self.i);
+        print(array[2]);
+        print("--------------------------------");
+        print(1 + 2 + 4 / 2 - 3 + (((6 - 1)*10)%3));
+        print((-2)%3);
+        print("--------------------------------");
+        for(i = 0; i != 12; i = i + 2) {
+            if(i != 4) {
+                continue;
+            }
+            for(y = 0; y < 12; y = y + 1) {
+                if(y % 7 == 6) {
+                    print(i);
+                    print(y);
+                    break;
+                }
+            }
 
-		//print(1);
-	}
-}
-
-actor B(2){
-	knownactors {
-		A a;
-	}
-
-	actorvars {
-	    int x;
-	}
-
-	msghandler foo(int i) {
-		sender.bar(i+1);
-	}
+        }
+    }
 }
 
 main {
-	A a(b):();
-	B b(a):();
+    A a1():(1,true,"hi",2*6);
 }

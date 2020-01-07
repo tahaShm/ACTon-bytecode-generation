@@ -28,12 +28,12 @@ public class Acton {
                 throw new CompileErrorException();
             Visitor typeChecker = new typeCheckerImpl();
             typeChecker.visit(program);
-            if (Errors.hasErrors()) {
-                Errors.sortByValue();
-                Errors.getErrorMap().entrySet().forEach(entry->{
-                    System.out.println(entry.getKey());
-                });
-            }
+//            if (Errors.hasErrors()) {
+//                Errors.sortByValue();
+//                Errors.getErrorMap().entrySet().forEach(entry->{
+//                    System.out.println(entry.getKey());
+//                });
+//            }
             Visitor codeGenerator = new byteCodeGenerator();
             codeGenerator.visit(program);
         }

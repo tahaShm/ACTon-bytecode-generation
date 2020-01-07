@@ -14,25 +14,20 @@ return
 .limit locals 16
 new A
 dup
-iconst_5
+bipush 10
 invokespecial A/<init>(I)V
 astore_1
-new B
-dup
+aload_1
+invokevirtual A/setKnownActors()V
+aload_1
+iconst_1
+iconst_1
+ldc "hi"
 iconst_2
-invokespecial B/<init>(I)V
-astore_2
-aload_1
-aload_2
-invokevirtual A/setKnownActors(LB;)V
-aload_2
-aload_1
-invokevirtual B/setKnownActors(LA;)V
-aload_1
-invokevirtual A/initial()V
+bipush 6
+imul
+invokevirtual A/initial(IZ[[Ljava/lang/StringI)V
 aload_1
 invokevirtual A/start()V
-aload_2
-invokevirtual B/start()V
 return
 .end method
