@@ -201,7 +201,7 @@ public class byteCodeGenerator implements Visitor {
 
     public void makeDefaultActor() {
         try {
-            FileWriter myWriter = new FileWriter("DefaultActor.j");
+            FileWriter myWriter = new FileWriter("output/DefaultActor.j");
             myWriter.write(".class public DefaultActor\n" +
                     ".super java/lang/Thread\n" +
                     "\n" +
@@ -239,7 +239,7 @@ public class byteCodeGenerator implements Visitor {
 
     public void makeMessage() {
         try {
-            FileWriter myWriter = new FileWriter("Message.j");
+            FileWriter myWriter = new FileWriter("output/Message.j");
             myWriter.write(".class public abstract Message\n" +
                     ".super java/lang/Object\n" +
                     "\n" +
@@ -264,7 +264,7 @@ public class byteCodeGenerator implements Visitor {
 
     void makeActor() {
         try {
-            FileWriter myWriter = new FileWriter("Actor.j");
+            FileWriter myWriter = new FileWriter("output/Actor.j");
             myWriter.write(".class public Actor\n" +
                     ".super DefaultActor\n" +
                     "\n" +
@@ -359,7 +359,7 @@ public class byteCodeGenerator implements Visitor {
             try {
                 iloadCounter = 3;
                 String actorName = allActorNames.get(counter), handlerName = msgHandlerDeclaration.getName().getName();
-                FileWriter myWriter = new FileWriter(actorName + "_" + handlerName + ".j");
+                FileWriter myWriter = new FileWriter("output/" + actorName + "_" + handlerName + ".j");
                 myWriter.write(".class public " + actorName + "_" + handlerName + "\n");
                 myWriter.write(".super Message\n\n");
                 for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
@@ -446,8 +446,8 @@ public class byteCodeGenerator implements Visitor {
     void makeMain(ArrayList<ActorDeclaration> actors) {
         int aloadNum = 1;
         try {
-            FileWriter myWriter = new FileWriter("Main.j");
-            myWriter.write(".class public Main\n" +
+            expWriter = new FileWriter("output/Main.j");
+            expWriter.write(".class public Main\n" +
                     ".super java/lang/Object\n" +
                     "\n" +
                     ".method public <init>()V\n" +
@@ -457,36 +457,36 @@ public class byteCodeGenerator implements Visitor {
                     "invokespecial java/lang/Object/<init>()V\n" +
                     "return\n" +
                     ".end method\n\n");
-            myWriter.write(".method public static main([Ljava/lang/String;)V\n" +
+            expWriter.write(".method public static main([Ljava/lang/String;)V\n" +
                     ".limit stack 16\n" +
                     ".limit locals 16\n");
 
             //instantiation
             int queueSize, instantiationNum = 1;
             for (ActorInstantiation actorInstantiation: allActorInstantiations) {
-                myWriter.write("new " + actorInstantiation.getType().toString() + "\n" +
+                expWriter.write("new " + actorInstantiation.getType().toString() + "\n" +
                         "dup\n");
                 queueSize = findQueueSize(actors, actorInstantiation.getType().toString());
                 if (queueSize > 5)
-                    myWriter.write("bipush " + queueSize + "\n");
+                    expWriter.write("bipush " + queueSize + "\n");
                 else
-                    myWriter.write("iconst_" + queueSize + "\n");
-                myWriter.write("invokespecial " + actorInstantiation.getType().toString() + "/<init>(I)V\n");
-                myWriter.write("astore");
+                    expWriter.write("iconst_" + queueSize + "\n");
+                expWriter.write("invokespecial " + actorInstantiation.getType().toString() + "/<init>(I)V\n");
+                expWriter.write("astore");
                 if (instantiationNum > 3)
-                    myWriter.write(" " + instantiationNum + "\n");
+                    expWriter.write(" " + instantiationNum + "\n");
                 else
-                    myWriter.write("_" + instantiationNum + "\n");
+                    expWriter.write("_" + instantiationNum + "\n");
                 instantiationNum++;
             }
 
             //set known actors
             for (ActorInstantiation actorInstantiation: allActorInstantiations) {
-                myWriter.write("aload");
+                expWriter.write("aload");
                 if (aloadNum > 3)
-                    myWriter.write(" " + aloadNum + "\n");
+                    expWriter.write(" " + aloadNum + "\n");
                 else
-                    myWriter.write("_" + aloadNum + "\n");
+                    expWriter.write("_" + aloadNum + "\n");
                 int foundNum;
                 ArrayList<String> knownActorTypes = new ArrayList<>();
                 for (Identifier identifier: actorInstantiation.getKnownActors()) {
@@ -494,19 +494,19 @@ public class byteCodeGenerator implements Visitor {
                     for (ActorInstantiation find: allActorInstantiations) {
                         if (identifier.getName().equals(find.getIdentifier().getName())) {
                             knownActorTypes.add(bytecodeType(find.getType().toString()));
-                            myWriter.write("aload");
+                            expWriter.write("aload");
                             if (foundNum > 3)
-                                myWriter.write(" " + foundNum + "\n");
+                                expWriter.write(" " + foundNum + "\n");
                             else
-                                myWriter.write("_" + foundNum + "\n");
+                                expWriter.write("_" + foundNum + "\n");
                         }
                         foundNum++;
                     }
                 }
-                myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/setKnownActors(");
+                expWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/setKnownActors(");
                 for (String type: knownActorTypes)
-                    myWriter.write(type);
-                myWriter.write(")V\n");
+                    expWriter.write(type);
+                expWriter.write(")V\n");
                 aloadNum++;
             }
 
@@ -516,17 +516,17 @@ public class byteCodeGenerator implements Visitor {
                 ArrayList<String> argTypes = new ArrayList<>();
                 if (hasInitial(actorInstantiation.getType().toString(), actors)) {
                     if (aloadNum > 3)
-                        myWriter.write("aload " + aloadNum +  "\n");
+                        expWriter.write("aload " + aloadNum +  "\n");
                     else
-                        myWriter.write("aload_" + aloadNum +  "\n");
+                        expWriter.write("aload_" + aloadNum +  "\n");
                     for (Expression initArg: actorInstantiation.getInitArgs()) {
-                        //TODO should change this part to write on myWriter not expWriter
+                        //TODO should change this part to write on expWriter
                         argTypes.add(expressionType(initArg).toString());
                     }
-                    myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/initial(");
+                    expWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/initial(");
                     for (String argType: argTypes)
-                        myWriter.write(bytecodeType(argType));
-                    myWriter.write(")V\n");
+                        expWriter.write(bytecodeType(argType));
+                    expWriter.write(")V\n");
                 }
                 aloadNum++;
             }
@@ -535,17 +535,17 @@ public class byteCodeGenerator implements Visitor {
             aloadNum = 1;
             for (ActorInstantiation actorInstantiation: allActorInstantiations) {
                 if (aloadNum > 3)
-                    myWriter.write("aload " + aloadNum + "\n");
+                    expWriter.write("aload " + aloadNum + "\n");
                 else
-                    myWriter.write("aload_" + aloadNum + "\n");
-                myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/start()V\n");
+                    expWriter.write("aload_" + aloadNum + "\n");
+                expWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/start()V\n");
                 aloadNum++;
             }
 
-            myWriter.write("return\n" +
+            expWriter.write("return\n" +
                     ".end method");
-            myWriter.flush();
-            myWriter.close();
+            expWriter.flush();
+            expWriter.close();
         }
         catch (IOException e) {
             System.out.println("An error occurred.");
@@ -575,18 +575,10 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(ActorDeclaration actorDeclaration) {
+        actorFileName = actorDeclaration.getName().getName();
 
         try {
-            File actorFile = new File(actorDeclaration.getName().getName() + ".j");
-            actorFile.createNewFile();
-            actorFileName = actorDeclaration.getName().getName();
-        } catch (IOException e) {
-            System.out.println("An error occurred1.");
-            e.printStackTrace();
-        }
-
-        try {
-            FileWriter myWriter = new FileWriter(actorFileName + ".j");
+            FileWriter myWriter = new FileWriter("output/" + actorFileName + ".j");
             myWriter.write(".class public " + actorFileName + "\n");
             myWriter.write(".super Actor\n\n");
 
@@ -625,7 +617,7 @@ public class byteCodeGenerator implements Visitor {
         }
 
         try {
-            FileWriter myWriter = new FileWriter(actorFileName + ".j" , true);
+            FileWriter myWriter = new FileWriter("output/" + actorFileName + ".j" , true);
             myWriter.write("\n.method public setKnownActors(");
             if (actorDeclaration.getKnownActors() != null) {
                 for (VarDeclaration varDeclaration : actorDeclaration.getKnownActors()) {
@@ -669,7 +661,7 @@ public class byteCodeGenerator implements Visitor {
     public void visit(HandlerDeclaration handlerDeclaration) {
         msgHandlerFileName = handlerDeclaration.getName().getName();
         try {
-            FileWriter myWriter = new FileWriter(actorFileName  + ".j" , true);
+            FileWriter myWriter = new FileWriter("output/" + actorFileName  + ".j" , true);
             if (handlerDeclaration instanceof InitHandlerDeclaration) {
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(");
 
@@ -690,7 +682,7 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.close();
 
                 if (handlerDeclaration.getBody() != null) {
-                    expWriter = new FileWriter(actorFileName + ".j", true);
+                    expWriter = new FileWriter("output/" + actorFileName + ".j", true);
                     for (Statement statement : handlerDeclaration.getBody()) {
                         statement.accept(this);
                     }
@@ -698,7 +690,7 @@ public class byteCodeGenerator implements Visitor {
                     expWriter.close();
                 }
 
-                FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
+                FileWriter myWriter2 = new FileWriter("output/" + actorFileName  + ".j" , true);
                 myWriter2.write("return\n" +
                         ".end method\n");
                 myWriter2.flush();
@@ -756,7 +748,7 @@ public class byteCodeGenerator implements Visitor {
                 myWriter.close();
 
                 if (handlerDeclaration.getBody() != null) {
-                    expWriter = new FileWriter(actorFileName + ".j", true);
+                    expWriter = new FileWriter("output/" + actorFileName + ".j", true);
                     for (Statement statement : handlerDeclaration.getBody()) {
                         statement.accept(this);
                     }
@@ -764,7 +756,7 @@ public class byteCodeGenerator implements Visitor {
                     expWriter.close();
                 }
 
-                FileWriter myWriter2 = new FileWriter(actorFileName  + ".j" , true);
+                FileWriter myWriter2 = new FileWriter("output/" + actorFileName  + ".j" , true);
                 myWriter2.write("return\n" +
                         ".end method\n");
                 myWriter2.flush();

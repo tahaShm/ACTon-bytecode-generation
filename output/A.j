@@ -16,7 +16,11 @@ return
 
 .method public initial()V
 aload_0
-getfield A/b LB;aload_0
+getfield A/b LB;
+aload_0
+aload_0
+getfield A/i I
+invokevirtual B/send_foo(LActor;I)V
 return
 .end method
 
