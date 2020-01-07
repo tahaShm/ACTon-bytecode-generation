@@ -14,7 +14,6 @@ import main.ast.type.Type;
 import main.ast.type.noType.NoType;
 import main.ast.type.primitiveType.BooleanType;
 import main.ast.type.primitiveType.IntType;
-import main.ast.type.primitiveType.StringType;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -32,6 +31,8 @@ public class byteCodeGenerator implements Visitor {
     private ArrayList <MsgHandlerDeclaration> allMsgHandlers = new ArrayList<>();
     private ArrayList <String> allActorNames = new ArrayList<>();
     private ArrayList <ActorInstantiation> allActorInstantiations = new ArrayList<>();
+    private ArrayList<Integer> endLoopLabel = new ArrayList<>();
+    private ArrayList<Integer> updateLoopLabel = new ArrayList<>();
 
     public String bytecodeType(String type) {
         String ans = "";
@@ -519,6 +520,7 @@ public class byteCodeGenerator implements Visitor {
                     else
                         myWriter.write("aload_" + aloadNum +  "\n");
                     for (Expression initArg: actorInstantiation.getInitArgs()) {
+                        //TODO should change this part to write on myWriter not expWriter
                         argTypes.add(expressionType(initArg).toString());
                     }
                     myWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/initial(");
@@ -940,41 +942,82 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(For loop) {
+        int beginLoop, endLoop, updateLoop;
+        try {
+            if (loop.getInitialize() != null)
+                loop.getInitialize().accept(this);
 
-        if (loop.getInitialize() != null)
-            loop.getInitialize().accept(this);
+            beginLoop = labelIndex;
+            expWriter.write(labelIndex + ": ");
+            labelIndex++;
 
-        if (loop.getCondition() != null)
-            loop.getCondition().accept(this);
+            updateLoop = labelIndex;
+            updateLoopLabel.add(labelIndex);
+            labelIndex++;
 
-        if (loop.getUpdate() != null)
-            loop.getUpdate().accept(this);
+            endLoop = labelIndex;
+            endLoopLabel.add(labelIndex);
+            labelIndex++;
 
-        if (loop.getBody() != null)
-            loop.getBody().accept(this);
+            if (loop.getCondition() != null)
+                expressionType(loop.getCondition());
+
+            expWriter.write("ifeq " + endLoop + "\n");
+
+            if (loop.getBody() != null) {
+                loop.getBody().accept(this);
+                updateLoopLabel.remove(updateLoopLabel.size() - 1);
+                endLoopLabel.remove(endLoopLabel.size() - 1);
+            }
+
+            expWriter.write(updateLoop + ": ");
+
+            if (loop.getUpdate() != null)
+                loop.getUpdate().accept(this);
+
+            expWriter.write("goto " + beginLoop + "\n");
+            expWriter.write(endLoop + ": ");
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void visit(Break breakLoop) {
+        try {
+            expWriter.write("goto " + endLoopLabel.get(endLoopLabel.size() - 1) + "\n");
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void visit(Continue continueLoop) {
+        try {
+            expWriter.write("goto " + updateLoopLabel.get(updateLoopLabel.size() - 1) + "\n");
+        }
+        catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void visit(MsgHandlerCall msgHandlerCall) {
         if (msgHandlerCall.getInstance() != null) {
             try {
-
                 if (msgHandlerCall.getInstance() instanceof Self) {
                     expWriter.write("aload_0\n");
                 }
                 else if (msgHandlerCall.getInstance() instanceof Sender) {
-//                    expWriter.write();
+                    expWriter.write("aload_1\n");
                 }
                 else {
-                    expWriter.write(getFieldLoadCommand(((Identifier)msgHandlerCall.getInstance()).getName()));
+                    expWriter.write(getFieldLoadCommand(((Identifier)msgHandlerCall.getInstance()).getName()) + "\n");
                 }
             }
             catch (IOException e) {
@@ -992,14 +1035,22 @@ public class byteCodeGenerator implements Visitor {
                 expWriter.write("aload_0\n");
 
                 for (Expression expression : msgHandlerCall.getArgs()) {
-                    expression.accept(this);
+                    expressionType(expression);
                 }
 
-//                System.out.println(msgHandlerCall.getInstance().toString());
-//                expWriter.write("invokevirtual " + getIdType(msgHandlerCall.getInstance().toString()) + "/send_"
-//                        + msgHandlerCall.getMsgHandlerName().getName() + "(LActor;");
-//                expWriter.write(getMsgHandlerArgTypes(msgHandlerCall.getMsgHandlerName().getName(), getIdType(msgHandlerCall.getInstance().toString())));
-//                expWriter.write(")V\n");
+                String instanceType = "";
+                if (msgHandlerCall.getInstance() instanceof Self)
+                    instanceType = actorFileName;
+                else if (msgHandlerCall.getInstance() instanceof Sender)
+                    instanceType = "Actor";
+                else if (msgHandlerCall.getInstance() instanceof Identifier)
+                    instanceType = getIdType(((Identifier) msgHandlerCall.getInstance()).getName());
+                expWriter.write("invokevirtual " + instanceType + "/send_"
+                        + msgHandlerCall.getMsgHandlerName().getName() + "(LActor;");
+                for (Expression expression : msgHandlerCall.getArgs()) {
+                    expWriter.write(bytecodeType(expressionTypeNoPrint(expression).toString()));
+                }
+                expWriter.write(")V\n");
             }
             catch (IOException e) {
                 System.out.println("An error occurred.");
@@ -1066,7 +1117,7 @@ public class byteCodeGenerator implements Visitor {
                 }
                 else
                     returnType = new NoType();
-            }
+            } //done
             else if (operator == "not") {
                 if (expressionType(operand) instanceof BooleanType) {
                     try {
@@ -1085,7 +1136,7 @@ public class byteCodeGenerator implements Visitor {
                 }
                 else
                     returnType = new NoType();
-            }
+            } //done
             else if (operator == "postinc" || operator == "preinc" || operator == "predec" || operator == "postdec"){
                 try {
                     returnType = new IntType();
@@ -1198,8 +1249,8 @@ public class byteCodeGenerator implements Visitor {
                             break;
                     }
                 }catch(IOException e){}
-            } // later
-        }
+            } // done
+        } //done
 
         else if (expression instanceof BinaryExpression) {
             Expression lOperand = ((BinaryExpression) expression).getLeft();
@@ -1424,6 +1475,82 @@ public class byteCodeGenerator implements Visitor {
             catch(IOException e) {}
         } //done
 
+        return returnType;
+    }
+
+    public Type expressionTypeNoPrint(Expression expression) {
+        Type returnType = null;
+
+        if (expression instanceof UnaryExpression) {
+            Expression operand = ((UnaryExpression) expression).getOperand();
+            String operator = ((UnaryExpression) expression).getUnaryOperator().toString();
+            if (operator == "minus" || operator == "preinc" || operator == "postinc" || operator == "predec" || operator == "postDec") {
+                if (expressionTypeNoPrint(operand) instanceof IntType)
+                    returnType = new IntType();
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "not") {
+                if (expressionTypeNoPrint(operand) instanceof BooleanType)
+                    returnType = new BooleanType();
+                else
+                    returnType = new NoType();
+            }
+        }
+
+
+        else if (expression instanceof BinaryExpression) {
+            Expression lOperand = ((BinaryExpression) expression).getLeft();
+            Expression rOperand = ((BinaryExpression) expression).getRight();
+            String operator = ((BinaryExpression) expression).getBinaryOperator().toString();
+            if (operator == "add" || operator == "sub" || operator == "mult" || operator == "div" || operator == "mod") {
+                if (expressionTypeNoPrint(lOperand) instanceof IntType && expressionTypeNoPrint(rOperand) instanceof IntType)
+                    returnType = new IntType();
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "gt" || operator == "lt") {
+                if (expressionTypeNoPrint(lOperand) instanceof IntType && expressionTypeNoPrint(rOperand) instanceof IntType)
+                    returnType = new BooleanType();
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "and" || operator == "or") {
+                if (expressionTypeNoPrint(lOperand) instanceof BooleanType && expressionTypeNoPrint(rOperand) instanceof BooleanType)
+                    returnType = new BooleanType();
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "assign") {
+                if (expressionTypeNoPrint(lOperand).toString() == expressionTypeNoPrint(rOperand).toString())
+                    returnType = expressionTypeNoPrint(lOperand);
+                else
+                    returnType = new NoType();
+            }
+            else if (operator == "eq" || operator == "neq") {
+                if (expressionTypeNoPrint(lOperand).toString() == expressionTypeNoPrint(rOperand).toString())
+                    returnType = new BooleanType();
+                else
+                    returnType = new NoType();
+            }
+        }
+
+
+        else if (expression instanceof Identifier) {
+            returnType = getIdTypeType(((Identifier) expression).getName());
+        }
+
+
+        else if (expression instanceof Value)
+            returnType = expression.getType();
+
+
+        else if (expression instanceof ActorVarAccess) {
+            returnType = getIdTypeActorVarsType(((ActorVarAccess) expression).getVariable().getName());
+        }
+        else if (expression instanceof ArrayCall){
+            returnType = new IntType();
+        }
         return returnType;
     }
 }
