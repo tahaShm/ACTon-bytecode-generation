@@ -26,8 +26,8 @@ public class Acton {
             nameAnalyser.visit(program);
             if( nameAnalyser.numOfErrors() > 0 )
                 throw new CompileErrorException();
-            Visitor typeChecker = new typeCheckerImpl();
-            typeChecker.visit(program);
+//            Visitor typeChecker = new typeCheckerImpl();
+//            typeChecker.visit(program);
 //            if (Errors.hasErrors()) {
 //                Errors.sortByValue();
 //                Errors.getErrorMap().entrySet().forEach(entry->{

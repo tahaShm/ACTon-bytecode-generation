@@ -3,14 +3,38 @@
   <component name="ChangeListManager">
     <list default="true" id="b6e6e018-c0ad-4bad-81f7-dbcdfc595914" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/A.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/A.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/A_bar.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/A_bar.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Actor.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Actor.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/B.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/B.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/B_foo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/B_foo.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/DefaultActor.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/DefaultActor.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Main.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Message.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/Message.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/jasmin/jasmin.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/A.class" beforeDir="false" afterPath="$PROJECT_DIR$/java/A.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/java/A.java" beforeDir="false" afterPath="$PROJECT_DIR$/java/A.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/compiler_p4/main/Acton.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/compiler_p4/main/visitor/byteCodeGenerator.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/compiler_p4/main/visitor/byteCodeGenerator.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/A.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/A.j" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/A_bar.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/A_bar22.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/B.j" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/output/B_foo.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A_foo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/A_foo.j" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/Actor.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/Actor.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/Actor.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/DefaultActor.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/output/DefaultActor.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/DefaultActor.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/Main.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/output/Main.j" beforeDir="false" afterPath="$PROJECT_DIR$/output/Main.j" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/Message.class" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/sample.act" beforeDir="false" afterPath="$PROJECT_DIR$/sample.act" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/Acton.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/Acton.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/visitor/byteCodeGenerator.java" afterDir="false" />
@@ -109,6 +133,8 @@
       <workItem from="1578344572103" duration="2269000" />
       <workItem from="1578377846750" duration="9355000" />
       <workItem from="1578390823248" duration="9349000" />
+      <workItem from="1578413339027" duration="2222000" />
+      <workItem from="1578586228709" duration="10356000" />
     </task>
     <servers />
   </component>

@@ -2,32 +2,52 @@
 .super java/lang/Object
 
 .method public <init>()V
-.limit stack 1
-.limit locals 1
+.limit stack 32
+.limit locals 32
 aload_0
 invokespecial java/lang/Object/<init>()V
 return
 .end method
 
 .method public static main([Ljava/lang/String;)V
-.limit stack 16
-.limit locals 16
-new A
+.limit stack 32
+.limit locals 32
+new BufferManager
 dup
-bipush 10
-invokespecial A/<init>(I)V
+iconst_4
+invokespecial BufferManager/<init>(I)V
 astore_1
-aload_1
-invokevirtual A/setKnownActors()V
-aload_1
-iconst_1
-iconst_1
-ldc "hi"
+new Producer
+dup
 iconst_2
-bipush 6
-imul
-invokevirtual A/initial(IZ[[Ljava/lang/StringI)V
+invokespecial Producer/<init>(I)V
+astore_2
+new Consumer
+dup
+iconst_2
+invokespecial Consumer/<init>(I)V
+astore_3
 aload_1
-invokevirtual A/start()V
+aload_2
+aload_3
+invokevirtual BufferManager/setKnownActors(LProducer;LConsumer;)V
+aload_2
+aload_1
+invokevirtual Producer/setKnownActors(LBufferManager;)V
+aload_3
+aload_1
+invokevirtual Consumer/setKnownActors(LBufferManager;)V
+aload_1
+invokevirtual BufferManager/initial()V
+aload_2
+invokevirtual Producer/initial()V
+aload_3
+invokevirtual Consumer/initial()V
+aload_1
+invokevirtual BufferManager/start()V
+aload_2
+invokevirtual Producer/start()V
+aload_3
+invokevirtual Consumer/start()V
 return
 .end method

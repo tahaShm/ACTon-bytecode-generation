@@ -11,18 +11,24 @@ import main.ast.node.expression.values.StringValue;
 import main.ast.node.expression.values.Value;
 import main.ast.node.statement.*;
 import main.ast.type.Type;
+import main.ast.type.arrayType.ArrayType;
 import main.ast.type.noType.NoType;
 import main.ast.type.primitiveType.BooleanType;
 import main.ast.type.primitiveType.IntType;
+import main.ast.type.primitiveType.StringType;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.SQLOutput;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 public class byteCodeGenerator implements Visitor {
     private String actorFileName;
     private int labelIndex = 0;
+    private boolean inInit = false;
     private String msgHandlerFileName;
     private ArrayList <VarDeclaration> currentMsgArgs;
     private ArrayList <VarDeclaration> currentActorVars;
@@ -49,7 +55,7 @@ public class byteCodeGenerator implements Visitor {
         String ans = "";
         switch(type) {
             case "string":
-                ans = "[[Ljava/lang/String";
+                ans = "Ljava/lang/String;";
                 break;
             case "int":
                 ans = "I";
@@ -68,10 +74,15 @@ public class byteCodeGenerator implements Visitor {
 
     public int getLocalArgIdx(String id) {
         int idx = 0;
+        if (currentMsgArgs == null)
+            return -1;
         for (VarDeclaration varDeclaration : currentMsgArgs) {
             idx++;
             if (varDeclaration.getIdentifier().getName().equals(id)) {
-                return idx + 1;
+                if (inInit)
+                    return idx;
+                else
+                    return idx + 1;
             }
         }
         return -1;
@@ -223,7 +234,23 @@ public class byteCodeGenerator implements Visitor {
                     "invokespecial java/lang/Thread/<init>()V\n" +
                     "return\n" +
                     ".end method\n");
+
+            int idx = 0, numOfArgsEqual;
             for (MsgHandlerDeclaration msgHandlerDeclaration: allMsgHandlers) {
+                numOfArgsEqual = 0;
+                for (int i = idx + 1; i < allMsgHandlers.size(); i++) {
+                    if (allMsgHandlers.get(i).getName().getName() == msgHandlerDeclaration.getName().getName()) {
+                        if (allMsgHandlers.get(i).getArgs().size() == msgHandlerDeclaration.getArgs().size()) {
+                            for (int j = 0; j < msgHandlerDeclaration.getArgs().size(); j++) {
+                                if (msgHandlerDeclaration.getArgs().get(j).getType().toString() == allMsgHandlers.get(i).getArgs().get(j).getType().toString())
+                                    numOfArgsEqual++;
+                            }
+                        }
+                    }
+                }
+                idx++;
+                if (numOfArgsEqual == msgHandlerDeclaration.getArgs().size() && (idx != allMsgHandlers.size())) //to remove duplicates
+                    continue;
                 myWriter.write("\n" +
                         ".method public send_" + msgHandlerDeclaration.getName().getName() +
                         "(LActor;");
@@ -232,7 +259,7 @@ public class byteCodeGenerator implements Visitor {
                 }
                 myWriter.write(")V\n" +
                         ".limit stack 2\n" +
-                        ".limit locals 16\n" +
+                        ".limit locals 32\n" +
                         "getstatic java/lang/System/out Ljava/io/PrintStream;\n" +
                         "ldc \"there is no msghandler named " + msgHandlerDeclaration.getName().getName() + " in sender\"\n" +
                         "invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V\n" +
@@ -310,8 +337,10 @@ public class byteCodeGenerator implements Visitor {
                     "\n" +
                     ".method public run()V\n" +
                     ".limit stack 2\n" +
-                    ".limit locals 1\n" +
+                    ".limit locals 2\n" +
                     "Label0:\n" +
+                    "aconst_null\n" +
+                    "astore_1\n" +
                     "aload_0\n" +
                     "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
                     "invokevirtual java/util/concurrent/locks/ReentrantLock/lock()V\n" +
@@ -324,11 +353,16 @@ public class byteCodeGenerator implements Visitor {
                     "iconst_0\n" +
                     "invokevirtual java/util/ArrayList/remove(I)Ljava/lang/Object;\n" +
                     "checkcast Message\n" +
-                    "invokevirtual Message/execute()V\n" +
+                    "astore_1\n" +
                     "Label31:\n" +
                     "aload_0\n" +
                     "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
                     "invokevirtual java/util/concurrent/locks/ReentrantLock/unlock()V\n" +
+                    "aload_1\n" +
+                    "ifnull Label46\n" +
+                    "aload_1\n" +
+                    "invokevirtual Message/execute()V\n" +
+                    "Label46:\n" +
                     "goto Label0\n" +
                     ".end method\n" +
                     "\n" +
@@ -354,7 +388,7 @@ public class byteCodeGenerator implements Visitor {
                     "getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;\n" +
                     "invokevirtual java/util/concurrent/locks/ReentrantLock/unlock()V\n" +
                     "return\n" +
-                    ".end method");
+                    ".end method\n");
             myWriter.flush();
             myWriter.close();
         }
@@ -385,8 +419,8 @@ public class byteCodeGenerator implements Visitor {
                 for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs())
                     myWriter.write(bytecodeType(varDeclaration.getType().toString()));
                 myWriter.write(")V\n");
-                myWriter.write(".limit stack 2\n" +
-                        ".limit locals 16\n" +
+                myWriter.write(".limit stack 32\n" +
+                        ".limit locals 32\n" +
                         "aload_0\n" +
                         "invokespecial Message/<init>()V\n" +
                         "aload_0\n" +
@@ -396,7 +430,11 @@ public class byteCodeGenerator implements Visitor {
                         "aload_2\n");
                 myWriter.write("putfield " + actorName + "_" + handlerName + "/sender LActor;\n");
                 for (VarDeclaration varDeclaration: msgHandlerDeclaration.getArgs()) {
-                    myWriter.write("aload_0\n" + "iload");
+                    String idType = varDeclaration.getType().toString();
+                    String preCode = "i";
+                    if (idType == "string" || idType == "int[]")
+                        preCode = "a";
+                    myWriter.write("aload_0\n" + preCode + "load");
                     if (iloadCounter > 3)
                         myWriter.write(" " + iloadCounter + "\n");
                     else
@@ -410,8 +448,8 @@ public class byteCodeGenerator implements Visitor {
 
                 //execute
                 myWriter.write(".method public execute()V\n" +
-                        ".limit stack 3\n" +
-                        ".limit locals 16\n" +
+                        ".limit stack 32\n" +
+                        ".limit locals 32\n" +
                         "aload_0\n");
                 myWriter.write("getfield " + actorName + "_" + handlerName + "/receiver L" + actorName + ";\n");
                 myWriter.write("aload_0\n");
@@ -462,15 +500,15 @@ public class byteCodeGenerator implements Visitor {
                     ".super java/lang/Object\n" +
                     "\n" +
                     ".method public <init>()V\n" +
-                    ".limit stack 1\n" +
-                    ".limit locals 1\n" +
+                    ".limit stack 32\n" +
+                    ".limit locals 32\n" +
                     "aload_0\n" +
                     "invokespecial java/lang/Object/<init>()V\n" +
                     "return\n" +
                     ".end method\n\n");
             expWriter.write(".method public static main([Ljava/lang/String;)V\n" +
-                    ".limit stack 16\n" +
-                    ".limit locals 16\n");
+                    ".limit stack 32\n" +
+                    ".limit locals 32\n");
 
             //instantiation
             int queueSize, instantiationNum = 1;
@@ -531,7 +569,6 @@ public class byteCodeGenerator implements Visitor {
                     else
                         expWriter.write("aload_" + aloadNum +  "\n");
                     for (Expression initArg: actorInstantiation.getInitArgs()) {
-                        //TODO should change this part to write on expWriter
                         argTypes.add(expressionType(initArg).toString());
                     }
                     expWriter.write("invokevirtual " + actorInstantiation.getType().toString() + "/initial(");
@@ -562,6 +599,23 @@ public class byteCodeGenerator implements Visitor {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
+    }
+
+    String getInitCommand(VarDeclaration declaration) {
+        String out = "error";
+        if (declaration.getType() instanceof IntType || declaration.getType() instanceof BooleanType)
+            out = "iconst_0\n" + getStoreCommand(declaration.getIdentifier().getName()) + "\n";
+        else if (declaration.getType() instanceof StringType)
+            out = "ldc \"\"\n" + getStoreCommand(declaration.getIdentifier().getName()) + "\n";
+        else if (declaration.getType() instanceof ArrayType) {
+            out = "bipush " + ((ArrayType)declaration.getType()).getSize() + "\nnewarray int\n";
+            out += getStoreCommand(declaration.getIdentifier().getName()) + "\n";
+            for (int i = 0; i < ((ArrayType)declaration.getType()).getSize(); i++) {
+                out += getLoadCommand(declaration.getIdentifier().getName()) + "\nbipush " + i + "\n";
+                out += "iconst_0\n" + "iastore\n";
+            }
+        }
+        return out;
     }
 
     @Override
@@ -608,9 +662,21 @@ public class byteCodeGenerator implements Visitor {
                 }
             }
             myWriter.write("\n.method public <init>(I)V\n" +
-                    ".limit stack 2\n" +
-                    ".limit locals 2\n" +
-                    "aload_0\n" +
+                    ".limit stack 32\n" +
+                    ".limit locals 32\n");
+
+            if (actorDeclaration.getActorVars() != null) {
+                for (VarDeclaration varDeclaration : actorDeclaration.getActorVars()) {
+                    if (varDeclaration.getType() instanceof ArrayType) {
+                        myWriter.write("aload_0\n");
+                        myWriter.write("bipush " + ((ArrayType)varDeclaration.getType()).getSize() + "\n");
+                        myWriter.write("newarray int\n");
+                        myWriter.write(getStoreCommand(varDeclaration.getIdentifier().getName()) + "\n");
+                    }
+                }
+            }
+
+            myWriter.write("aload_0\n" +
                     "iload_1\n" +
                     "invokespecial Actor/<init>(I)V\n" +
                     "return\n" +
@@ -637,7 +703,7 @@ public class byteCodeGenerator implements Visitor {
                 }
             }
             myWriter.write(")V\n");
-            myWriter.write(".limit stack 2\n");
+            myWriter.write(".limit stack 32\n");
             myWriter.write(".limit locals " + (actorDeclaration.getKnownActors().size() + 1) + "\n");
             if (actorDeclaration.getKnownActors() != null) {
                 int knownActorIdx = 0;
@@ -649,7 +715,7 @@ public class byteCodeGenerator implements Visitor {
                 }
             }
             myWriter.write("return\n" +
-                ".end method\n"
+                    ".end method\n"
             );
 
             myWriter.flush();
@@ -675,6 +741,7 @@ public class byteCodeGenerator implements Visitor {
         try {
             FileWriter myWriter = new FileWriter("output/" + actorFileName  + ".j" , true);
             if (handlerDeclaration instanceof InitHandlerDeclaration) {
+                inInit = true;
                 myWriter.write("\n.method public " + handlerDeclaration.getName().getName() + "(");
 
                 if (handlerDeclaration.getArgs() != null) {
@@ -684,11 +751,12 @@ public class byteCodeGenerator implements Visitor {
                     }
                     myWriter.write(")V\n");
                 }
-                myWriter.write(".limit stack 16\n");
-                myWriter.write(".limit locals 16\n");
+                myWriter.write(".limit stack 32\n");
+                myWriter.write(".limit locals 32\n");
                 if (handlerDeclaration.getLocalVars() != null) {
                     for (VarDeclaration varDeclaration : handlerDeclaration.getLocalVars()) {
                         currentMsgArgs.add(varDeclaration);
+                        myWriter.write(getInitCommand(varDeclaration));
                     }
                 }
 
@@ -709,6 +777,7 @@ public class byteCodeGenerator implements Visitor {
                         ".end method\n");
                 myWriter2.flush();
                 myWriter2.close();
+                inInit = false;
             }
 
             else {
@@ -720,18 +789,21 @@ public class byteCodeGenerator implements Visitor {
                     }
                     myWriter.write(")V\n");
                 }
-                myWriter.write(".limit stack 6\n");
-                myWriter.write(".limit locals 3\n");
+                myWriter.write(".limit stack 32\n");
+                myWriter.write(".limit locals 32\n");
                 myWriter.write("aload_0\n");
                 myWriter.write("new " + actorFileName + "_" + msgHandlerFileName + "\n");
                 myWriter.write("dup\n" +
-                    "aload_0\n" +
-                    "aload_1\n" +
-                    "iload_2\n"
+                        "aload_0\n" +
+                        "aload_1\n"
                 );
-                myWriter.write("invokespecial " + actorFileName + "_" + msgHandlerFileName + "/<init>(L" + actorFileName + ";" + "LActor;");
                 if (handlerDeclaration.getArgs() != null) {
                     currentMsgArgs = (ArrayList<VarDeclaration>) handlerDeclaration.getArgs().clone();
+                    for (VarDeclaration varDeclaration : handlerDeclaration.getArgs())
+                        myWriter.write(getLoadCommand(varDeclaration.getIdentifier().getName()) + "\n");
+                }
+                myWriter.write("invokespecial " + actorFileName + "_" + msgHandlerFileName + "/<init>(L" + actorFileName + ";" + "LActor;");
+                if (handlerDeclaration.getArgs() != null) {
                     for (VarDeclaration varDeclaration : handlerDeclaration.getArgs()) {
                         myWriter.write(bytecodeType(varDeclaration.getType().toString()) );
                     }
@@ -744,8 +816,8 @@ public class byteCodeGenerator implements Visitor {
                     }
                 }
                 myWriter.write("invokevirtual " + actorFileName + "/send(LMessage;)V\n" +
-                    "return\n" +
-                    ".end method\n"
+                        "return\n" +
+                        ".end method\n"
                 );
                 myWriter.flush();
 
@@ -757,8 +829,14 @@ public class byteCodeGenerator implements Visitor {
                     }
                     myWriter.write(")V\n");
                 }
-                myWriter.write(".limit stack 16\n");
-                myWriter.write(".limit locals 16\n");
+                myWriter.write(".limit stack 32\n");
+                myWriter.write(".limit locals 32\n");
+
+                if (handlerDeclaration.getLocalVars() != null) {
+                    for (VarDeclaration varDeclaration: handlerDeclaration.getLocalVars())
+                        myWriter.write(getInitCommand(varDeclaration));
+                }
+
                 myWriter.flush();
                 myWriter.close();
 
@@ -838,7 +916,6 @@ public class byteCodeGenerator implements Visitor {
 
     @Override
     public void visit(ArrayCall arrayCall) {
-
         if (arrayCall.getArrayInstance() != null)
             arrayCall.getArrayInstance().accept(this);
         if (arrayCall.getIndex() != null)
@@ -851,8 +928,9 @@ public class byteCodeGenerator implements Visitor {
         if (actorVarAccess.getSelf() != null)
             actorVarAccess.getSelf().accept(this);
 
-        if (actorVarAccess.getVariable() != null)
+        if (actorVarAccess.getVariable() != null) {
             actorVarAccess.getVariable().accept(this);
+        }
     }
 
     @Override
@@ -969,6 +1047,8 @@ public class byteCodeGenerator implements Visitor {
 
             if (loop.getCondition() != null)
                 expressionType(loop.getCondition());
+            else
+                expWriter.write("iconst_1\n");
 
             expWriter.write("ifeq " + endLoop + "\n");
 
@@ -1152,16 +1232,17 @@ public class byteCodeGenerator implements Visitor {
                         case "postinc":
                             if (operand instanceof Identifier) {
                                 expWriter.write(getLoadCommand(((Identifier) operand).getName(), true) + "\n");
-                                expWriter.write("dup_x1\n");
+                                expWriter.write("dup\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("iadd\n");
                                 expWriter.write(getStoreCommand(((Identifier) operand).getName()) + "\n");
                             } else if (operand instanceof ActorVarAccess) {
-                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName(), true) + "\n");
+                                expWriter.write("aload_0\n");
+                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                                 expWriter.write("dup_x1\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("iadd\n");
-                                expWriter.write(getStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
+                                expWriter.write(getFieldStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                             } else if (operand instanceof ArrayCall) {
                                 Expression arrayInstance = ((ArrayCall) operand).getArrayInstance();
                                 expressionType(arrayInstance);
@@ -1180,14 +1261,15 @@ public class byteCodeGenerator implements Visitor {
                                 expWriter.write(getLoadCommand(((Identifier) operand).getName(), true) + "\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("iadd\n");
-                                expWriter.write("dup_x1\n");
+                                expWriter.write("dup\n");
                                 expWriter.write(getStoreCommand(((Identifier) operand).getName()) + "\n");
                             } else if (operand instanceof ActorVarAccess) {
-                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName(), true) + "\n");
+                                expWriter.write("aload_0\n");
+                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("iadd\n");
                                 expWriter.write("dup_x1\n");
-                                expWriter.write(getStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
+                                expWriter.write(getFieldStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                             } else if (operand instanceof ArrayCall) {
                                 Expression arrayInstance = ((ArrayCall) operand).getArrayInstance();
                                 expressionType(arrayInstance);
@@ -1206,14 +1288,15 @@ public class byteCodeGenerator implements Visitor {
                                 expWriter.write(getLoadCommand(((Identifier) operand).getName(), true) + "\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("isub\n");
-                                expWriter.write("dup_x1\n");
+                                expWriter.write("dup\n");
                                 expWriter.write(getStoreCommand(((Identifier) operand).getName()) + "\n");
                             } else if (operand instanceof ActorVarAccess) {
-                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName(), true) + "\n");
+                                expWriter.write("aload_0\n");
+                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("isub\n");
                                 expWriter.write("dup_x1\n");
-                                expWriter.write(getStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
+                                expWriter.write(getFieldStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                             } else if (operand instanceof ArrayCall) {
                                 Expression arrayInstance = ((ArrayCall) operand).getArrayInstance();
                                 expressionType(arrayInstance);
@@ -1230,16 +1313,17 @@ public class byteCodeGenerator implements Visitor {
                         case "postdec":
                             if (operand instanceof Identifier) {
                                 expWriter.write(getLoadCommand(((Identifier) operand).getName(), true) + "\n");
-                                expWriter.write("dup_x1\n");
+                                expWriter.write("dup\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("isub\n");
                                 expWriter.write(getStoreCommand(((Identifier) operand).getName()) + "\n");
                             } else if (operand instanceof ActorVarAccess) {
-                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName(), true) + "\n");
+                                expWriter.write("aload_0\n");
+                                expWriter.write(getFieldLoadCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                                 expWriter.write("dup_x1\n");
                                 expWriter.write("iconst_1\n");
                                 expWriter.write("isub\n");
-                                expWriter.write(getStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
+                                expWriter.write(getFieldStoreCommand(((ActorVarAccess) operand).getVariable().getName()) + "\n");
                             } else if (operand instanceof ArrayCall) {
                                 Expression arrayInstance = ((ArrayCall) operand).getArrayInstance();
                                 expressionType(arrayInstance);
@@ -1465,7 +1549,6 @@ public class byteCodeGenerator implements Visitor {
 
         else if (expression instanceof ActorVarAccess) {
             try {
-                expWriter.write("aload_0\n");
                 expWriter.write(getFieldLoadCommand(((ActorVarAccess) expression).getVariable().getName()) + "\n");
                 returnType = getIdTypeActorVarsType(((ActorVarAccess) expression).getVariable().getName());
             }

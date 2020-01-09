@@ -32,8 +32,10 @@ return
 
 .method public run()V
 .limit stack 2
-.limit locals 1
+.limit locals 2
 Label0:
+aconst_null
+astore_1
 aload_0
 getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;
 invokevirtual java/util/concurrent/locks/ReentrantLock/lock()V
@@ -46,11 +48,16 @@ getfield Actor/queue Ljava/util/ArrayList;
 iconst_0
 invokevirtual java/util/ArrayList/remove(I)Ljava/lang/Object;
 checkcast Message
-invokevirtual Message/execute()V
+astore_1
 Label31:
 aload_0
 getfield Actor/lock Ljava/util/concurrent/locks/ReentrantLock;
 invokevirtual java/util/concurrent/locks/ReentrantLock/unlock()V
+aload_1
+ifnull Label46
+aload_1
+invokevirtual Message/execute()V
+Label46:
 goto Label0
 .end method
 

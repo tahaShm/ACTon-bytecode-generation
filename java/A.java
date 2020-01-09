@@ -6,10 +6,14 @@ public class A extends Actor {
         super(queueSize);
     }
 
-    public void initial(){
+    public void initial(String ss){
         int j = 0;
         int k = 2;
         int arr[];
+        String s, t;
+        s = "l;kasd1f";
+        t = "kljsdflk";
+        s = t;
         arr = new int[3];
         j = ++arr[2];
 //        b.send_foo(this,2);
